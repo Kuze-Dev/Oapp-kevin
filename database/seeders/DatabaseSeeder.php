@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\Order;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -13,11 +14,16 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        
+            User::factory()->create([
+                'name' => 'Admin User',
+                'email' => 'admin@example.com',
+                'role' => 'admin',
+                'password' => Hash::make('admin123'),
+                'email_verified_at' => now(), // Set the email as verified
+                'remember_token' => \Illuminate\Support\Str::random(10), // Generate a random token
+            ]);
+        
+        User::factory(10)->create();
     }
 }

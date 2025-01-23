@@ -3,7 +3,7 @@
 namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
-
+use Database\Factories\OrderFactory;
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Order>
  */
@@ -17,8 +17,10 @@ class OrderFactory extends Factory
     public function definition(): array
     {
         return [
-            'order_description' => fake()->sentence(),
-            'amount' => fake()->numberBetween(1000, 5000),
+            'order_name' => $this->faker->word(),
+            'quantity' => $this->faker->numberBetween(1, 10),
+            'order_description' =>$this->faker->sentence(),
+            'amount' => $this->faker->numberBetween(100, 500),
             'is_paid' => false,
         ];
     }
