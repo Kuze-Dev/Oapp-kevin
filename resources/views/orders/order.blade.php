@@ -4,7 +4,8 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Orders - Laravel</title>
-        <script src="https://cdn.tailwindcss.com"></script>
+        @vite('resources/css/app.css')
+
     </head>
     <body class="font-sans antialiased bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300">
         <div class="min-h-screen flex flex-col items-center justify-center">

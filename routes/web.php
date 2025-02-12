@@ -1,9 +1,14 @@
 <?php
 use App\Models\Order;
+
+use App\Livewire\Cart;
+use App\Livewire\Shop;
 use App\Models\Payment;
+use App\Support\Facades\App;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PaymentController;
+
 
 Route::get('/', function () {
     return view('welcome');
@@ -24,3 +29,15 @@ Route::controller(PaymentController::class)->group(function () {
     Route::get('payment-success', 'paymentSuccess')->name('payment.success');
     Route::get('payment-cancel', 'paymentCancel')->name('payment.cancel');
 });
+
+
+
+
+Route::get('/home', function () {
+    return view('components.layouts.app'); // Correct path to your app.blade.php
+});
+
+
+Route::get('/shop', Shop::class)->name('shop');
+Route::get('/cart', Cart::class)->name('cart');
+

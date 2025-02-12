@@ -14,16 +14,16 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        
+
             User::factory()->create([
                 'name' => 'Admin User',
                 'email' => 'admin@example.com',
                 'role' => 'admin',
-                'password' => Hash::make('admin123'),
+                'password' => 'admin123',
                 'email_verified_at' => now(), // Set the email as verified
                 'remember_token' => \Illuminate\Support\Str::random(10), // Generate a random token
             ]);
-        
+
         User::factory(10)->create();
     }
 }
