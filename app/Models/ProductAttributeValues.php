@@ -15,10 +15,14 @@ class ProductAttributeValues extends Model
     ];
 
 
-
     public function productAttribute(): BelongsTo
     {
         return $this->belongsTo(ProductAttribute::class);
+    }
+
+    public function product(): BelongsTo
+    {
+        return $this->belongsTo(Product::class);
     }
 
 }

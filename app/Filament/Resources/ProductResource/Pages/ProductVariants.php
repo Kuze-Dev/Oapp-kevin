@@ -24,154 +24,177 @@ class ProductVariants extends EditRecord
             Repeater::make('variations')
                 ->label('Product Variations')
                 ->collapsible()
-                ->defaultItems(1) // Ensures at least one item is always there
+                ->defaultItems(1)
                 ->columnSpan(2)
-                ->schema(function () {
-                    return [
-                        Section::make('Variation Details')
-                            ->columns(2)
-                            ->schema($this->getVariationFields()), // Call method dynamically
+                ->schema([
+                    Section::make('Variation Details')
+                        ->columns(2)
+                        ->schema($this->getVariationFields()),
 
-                        Group::make([
-                            FileUpload::make('sku_image_dir')->label('Variant Image')->columnSpanFull(),
-                            TextInput::make('sku')->label('SKU')->disabled(),
-                            TextInput::make('stock')->label('Stock')->numeric()->required(),
-                            TextInput::make('price')->label('Price')->numeric()->required(),
-                        ])->columns(3)
-                    ];
-                })
+                    Group::make([
+                        FileUpload::make('sku_image_dir')->label('Variant Image')->columnSpanFull(),
+                        TextInput::make('sku')->label('SKU')->disabled(),
+                        TextInput::make('stock')->label('Stock')->numeric()->required(),
+                        TextInput::make('price')->label('Price')->numeric()->required(),
+                    ])->columns(3),
+                ])
         ]);
     }
 
-
     private function getVariationFields(): array
-{
-    $product = $this->getRecord();
-
-    if (!$product) {
-        \Log::error('Product record is null.');
-        return [];
-    }
-
-    $product->loadMissing('productAttributes.productAttributeValues');
-
-    if (!$product->productAttributes || $product->productAttributes->isEmpty()) {
-        \Log::warning('No product attributes found.');
-        return [];
-    }
-
-
-    return collect($product->productAttributes)->flatMap(function ($productAttribute) {
-        return [
-            TextInput::make("attribute_{$productAttribute->id}_id")
-                ->hidden()
-                ->default($productAttribute->id),
-
-            TextInput::make("attribute_{$productAttribute->id}_name")
-                ->label('Attribute Type')
-                ->disabled()
-                ->default($productAttribute->name),
-
-            TextInput::make("attribute_{$productAttribute->id}_value")
-                ->label('Attribute Value')
-                ->required()
-                ->default(fn () => $productAttribute->productAttributeValues->pluck('value')->join(', ')), // Get value(s)
-        ];
-    })->toArray();
-}
-
-
-
-    protected function handleRecordUpdate(Model $record, array $data): Model
     {
-        $record->update($data);
-        $record->sku()->delete(); // Remove old SKUs to prevent duplicates
+        $product = $this->getRecord();
 
-        foreach ($data['variations'] as $variation) {
-            ProductSKU::create([
-                'sku' => $this->generateSKU($variation),
-                'product_id' => $record->id,
-                'product_attribute_id' => $variation["variation_type_{$variation['variation_type_id']}_id"] ?? null,
-                'product_attribute_value_id' => $variation["variation_type_{$variation['variation_type_id']}_value"] ?? null,
-                'stock' => $variation['stock'],
-                'price' => $variation['price'],
-            ]);
+        if (!$product || !$product->productAttributes || $product->productAttributes->isEmpty()) {
+            \Log::warning('No product attributes found.');
+            return [];
         }
 
-        return $record;
+        return $product->productAttributes->flatMap(function ($productAttribute) {
+            return [
+                TextInput::make("attributes.attribute{$productAttribute->id}.id")
+                    ->hidden()
+                    ->default($productAttribute->id),
+
+                TextInput::make("attributes.attribute{$productAttribute->id}.label")
+                    ->label('Label')
+                    ->disabled(),
+
+                TextInput::make("attributes.attribute{$productAttribute->id}.value")
+                    ->label('Value')
+                    ->required(),
+            ];
+        })->toArray();
     }
 
     protected function mutateFormDataBeforeFill(array $data): array
     {
-        $existingVariations = $this->record->sku->toArray();
-        \Log::info('Existing Variations:', $existingVariations);
+        $product = $this->getRecord();
 
-        $data['variations'] = $this->generateVariationCombination(
-            $this->record->productAttributes, $existingVariations
-        );
+        if (!$product->productAttributes || $product->productAttributes->isEmpty()) {
+            \Log::warning('No product attributes found for variation generation.');
+            return $data;
+        }
 
-        \Log::info('Generated Variations:', $data['variations']);
+        // Ensure SKUs exist
+        $existingVariations = $product->skus->map(function ($sku) use ($product) {
+            $product_attributes = $product->productAttributes;
+            $attributes = [];
 
-        if (empty($data['variations'])) {
-            $data['variations'] = [
-                ['stock' => 0, 'price' => 0, 'sku' => '']
+            // Ensure attributes are decoded properly
+            $skuAttributes = is_array($sku->attributes) ? $sku->attributes : json_decode($sku->attributes, true);
+
+            if (!empty($skuAttributes)) {
+                foreach ($skuAttributes as $attr) {
+                    $productAttribute = $product_attributes->firstWhere('id', $attr['id']);
+
+                    $attributes["attribute{$attr['id']}"] = [
+                        'id' => $attr['id'],
+                        'label' => $productAttribute ? $productAttribute->type : 'Unknown',
+                        'value' => $attr['value'],
+                    ];
+                }
+            }
+
+            return [
+                'sku' => $sku->sku,
+                'stock' => $sku->stock,
+                'price' => $sku->price,
+                'sku_image_dir' => $sku->sku_image_dir,
+                'attributes' => $attributes,
             ];
+        })->toArray();
+
+        // If we have existing variations, use them
+        if (!empty($existingVariations)) {
+            $data['variations'] = $existingVariations;
+        } else {
+            // Generate new variations if none exist
+            $data['variations'] = $this->generateVariationCombination(
+                $product->productAttributes,
+                []
+            );
         }
 
         return $data;
     }
 
+
     private function generateVariationCombination($productAttributes, array $existingVariations): array
     {
-        \Log::info('Product Attributes:', $productAttributes->toArray());
-        \Log::info('Existing Variations Before Processing:', $existingVariations);
+        $defaultStock = $this->getRecord()->stock ?? 0;
+        $defaultPrice = $this->getRecord()->price ?? 0;
 
-        $defaultStock = $this->record->stock ?? 0;
-        $defaultPrice = $this->record->price ?? 0;
+        $combinations = $this->productVariantCollection($productAttributes);
 
-        $variations = collect($this->productVariantCollection($productAttributes))
-            ->map(function ($variant) use ($existingVariations, $defaultStock, $defaultPrice) {
-                $optionIds = collect($variant)
-                    ->filter(fn($value, $key) => str_starts_with($key, 'variation_type_'))
-                    ->map(fn($option) => $option['id'])
-                    ->values()
-                    ->toArray();
+        return collect($combinations)->map(function ($variant) use ($defaultStock, $defaultPrice) {
+            $attributes = [];
+            foreach ($variant as $key => $option) {
+                $attrId = str_replace('attribute_', '', $key);
+                $attributes["attribute{$attrId}"] = [
+                    'id' => $attrId,
+                    'label' => $option['label'],
+                    'value' => $option['name'],
+                ];
+            }
 
-                \Log::info('Processing Variant:', $variant);
+            return [
+                'sku' => $this->generateSKU($variant),
+                'stock' => $defaultStock,
+                'price' => $defaultPrice,
+                'attributes' => $attributes,
+            ];
+        })->toArray();
 
-                $existing = collect($existingVariations)
-                    ->firstWhere(fn($existing) => $existing['attributes'] === $optionIds);
-
-                return array_merge($variant, [
-                    'stock' => $existing['stock'] ?? $defaultStock,
-                    'price' => $existing['price'] ?? $defaultPrice,
-                    'sku' => $existing['sku'] ?? $this->generateSKU($optionIds),
-                ]);
-            })->toArray();
-
-        \Log::info('Final Variations:', $variations);
-
-        return $variations;
     }
 
     private function productVariantCollection($productAttributes): array
     {
-        return collect($productAttributes)->reduce(
-            fn($result, $productAttribute) => $this->generateCombinations($result, $productAttribute), [[]]
+        return $productAttributes->reduce(
+            function ($result, $attribute) {
+                return $this->generateCombinations($result, $attribute);
+            },
+            [[]]
         );
     }
 
     private function generateCombinations(array $existingCombinations, $productAttribute): array
     {
-        return collect($productAttribute['values'])->flatMap(fn($option) =>
-            collect($existingCombinations)->map(fn($combination) => array_merge($combination, [
-                "variation_type_{$productAttribute['id']}" => [
-                    'id' => $option['id'],
-                    'name' => $option['value'],
-                    'label' => $productAttribute['name'],
-                ]
-            ]))->toArray()
-        )->toArray();
+        $combinations = [];
+
+        foreach ($existingCombinations as $existing) {
+            foreach ($productAttribute->productAttributeValues as $value) {
+                $combinations[] = array_merge($existing, [
+                    "attribute_{$productAttribute->id}" => [
+                        'id' => $value->id,
+                        'name' => $value->value,
+                        'label' => $productAttribute->type,
+                    ]
+                ]);
+            }
+        }
+
+        return $combinations;
+    }
+
+    protected function handleRecordUpdate(Model $record, array $data): Model
+    {
+        $record->update($data);
+        $record->skus()->delete(); // Delete old SKUs
+
+        foreach ($data['variations'] as $variation) {
+            $sku = ProductSKU::create([
+                'sku' => $variation['sku'] ?? $this->generateSKU($variation),
+                'product_id' => $record->id,
+                'attributes' => json_encode($variation['attributes']),
+                'stock' => $variation['stock'],
+                'price' => $variation['price'],
+                'sku_image_dir' => $variation['sku_image_dir'] ?? null,
+            ]);
+
+        }
+
+        return $record;
     }
 
     private function generateSKU($combination): string

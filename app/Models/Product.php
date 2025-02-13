@@ -24,34 +24,36 @@ class Product extends Model
         'status'
     ];
 
-    public function brand():BelongsTo
-{
-    return $this->belongsTo(Brand::class);
-}
+    public function brand(): BelongsTo
+    {
+        return $this->belongsTo(Brand::class);
+    }
 
-public function category():BelongsTo
-{
-    return $this->belongsTo(Category::class);
-}
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(Category::class);
+    }
 
-public function productAttributes(): HasMany
-{
-    return $this->hasMany(ProductAttribute::class);
-}
+    public function productAttributes(): HasMany
+    {
+        return $this->hasMany(ProductAttribute::class);
+    }
 
-public function productAttributeValues(): HasMany
-{
-    return $this->hasMany(ProductAttributeValues::class);
-}
+    public function productAttributeValues(): HasMany
+    {
+        return $this->hasMany(ProductAttributeValues::class, 'product_id');
+    }
 
-public function sku(): HasMany
-{
-    return $this->hasMany(ProductSKU::class);
-}
 
-protected $casts = [
-    'attributes' => 'array'
-];
+    public function skus(): HasMany
+    {
+        return $this->hasMany(ProductSKU::class);
+    }
+
+// protected $casts = [
+//     'attributes' => 'array', // Ensure attributes are treated as an array
+// ];
+
 
 }
 

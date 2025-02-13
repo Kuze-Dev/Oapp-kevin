@@ -62,7 +62,10 @@ class ProductResource extends Resource
                                     'color' => 'Color',
                                     'sizes' => 'Sizes',
                                     'metadata' => 'Metadata',
-                                ]),
+                                ])->reactive()
+                                    ->disableOptionWhen(fn (string $value,callable $get):bool=>
+                                    in_array($value,array_column($get('../../Product_Attributes') ?? [],'type'))),
+
                                 Repeater::make('Product_Values')->relationship('productAttributeValues')
                                     ->schema([
                                         TextInput::make('value')->label('Product Attribute Values')->required(),

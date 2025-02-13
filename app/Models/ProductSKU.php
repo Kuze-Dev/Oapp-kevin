@@ -12,11 +12,15 @@ class ProductSKU extends Model
 {
     protected $fillable = [
         'product_id',
-        'product_attribute_id',
-        'product_attribute_value_id',
+
         'sku',
         'price',
         'stock',
+        'attributes',
+    ];
+
+    protected $cast = [
+        'attributes' => 'array',
     ];
 
     public function product(): BelongsTo
@@ -24,13 +28,13 @@ class ProductSKU extends Model
         return $this->belongsTo(Product::class);
     }
 
-    public function productAttribute(): BelongsTo
-    {
-        return $this->belongsTo(ProductAttribute::class);
-    }
+    // public function productAttribute(): BelongsTo
+    // {
+    //     return $this->belongsTo(ProductAttribute::class);
+    // }
 
-    public function productAttributeValue(): BelongsTo
-    {
-        return $this->belongsTo(ProductAttributeValues::class);
-    }
+    // public function productAttributeValue(): BelongsTo
+    // {
+    //     return $this->belongsTo(ProductAttributeValues::class);
+    // }
 }

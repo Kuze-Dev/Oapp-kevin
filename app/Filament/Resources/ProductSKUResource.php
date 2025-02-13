@@ -76,8 +76,9 @@ class ProductSKUResource extends Resource
                     ->label('Product')
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('attribute_combination')
-                    ->label('Variation (Color - Size)')
+                    Tables\Columns\TextColumn::make('attributes')
+                    ->label('Attribute IDs')
+                    ->formatStateUsing(fn ($state) => self::extractAttributeIds($state))
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('sku')
@@ -94,7 +95,7 @@ class ProductSKUResource extends Resource
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
+
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -112,4 +113,23 @@ class ProductSKUResource extends Resource
             'edit' => Pages\EditProductSKU::route('/{record}/edit'),
         ];
     }
+
+    public static function canCreate(): bool
+    {
+        return false;
+    }
+
+
+    private static function extractAttributeIds($state): string
+{
+    if (!$state) {
+        return '-';
+    }
+
+    $attributes = is_array($state) ? $state : json_decode($state, true);
+
+
+    return implode(', ', array_column($attributes, 'id'));
+}
+
 }
