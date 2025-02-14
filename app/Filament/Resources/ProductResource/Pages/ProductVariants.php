@@ -14,9 +14,18 @@ use Filament\Forms\Components\FileUpload;
 use Filament\Resources\Pages\EditRecord;
 use App\Filament\Resources\ProductResource;
 
+
 class ProductVariants extends EditRecord
 {
     protected static string $resource = ProductResource::class;
+    protected static ?string $navigationIcon = 'heroicon-o-archive-box';
+
+    public static function getNavigationGroup(): ?string
+{
+    return 'Product Management';
+}
+
+
 
     public function form(Form $form): Form
     {
@@ -32,7 +41,7 @@ class ProductVariants extends EditRecord
                         ->schema($this->getVariationFields()),
 
                     Group::make([
-                        FileUpload::make('sku_image_dir')->label('Variant Image')->columnSpanFull(),
+                        FileUpload::make('sku_image')->label('Variant Image')->columnSpanFull(),
                         TextInput::make('sku')->label('SKU')->disabled(),
                         TextInput::make('stock')->label('Stock')->numeric()->required(),
                         TextInput::make('price')->label('Price')->numeric()->required(),
@@ -57,7 +66,7 @@ class ProductVariants extends EditRecord
                     ->default($productAttribute->id),
 
                 TextInput::make("attributes.attribute{$productAttribute->id}.label")
-                    ->label('Label')
+                    ->label('Type')
                     ->disabled(),
 
                 TextInput::make("attributes.attribute{$productAttribute->id}.value")
@@ -100,7 +109,7 @@ class ProductVariants extends EditRecord
                 'sku' => $sku->sku,
                 'stock' => $sku->stock,
                 'price' => $sku->price,
-                'sku_image_dir' => $sku->sku_image_dir,
+                'sku_image' => $sku->sku_image,
                 'attributes' => $attributes,
             ];
         })->toArray();
@@ -178,24 +187,25 @@ class ProductVariants extends EditRecord
     }
 
     protected function handleRecordUpdate(Model $record, array $data): Model
-    {
-        $record->update($data);
-        $record->skus()->delete(); // Delete old SKUs
+{
+    $record->update($data);
+    $record->skus()->delete(); // Delete old SKUs
 
-        foreach ($data['variations'] as $variation) {
-            $sku = ProductSKU::create([
-                'sku' => $variation['sku'] ?? $this->generateSKU($variation),
-                'product_id' => $record->id,
-                'attributes' => json_encode($variation['attributes']),
-                'stock' => $variation['stock'],
-                'price' => $variation['price'],
-                'sku_image_dir' => $variation['sku_image_dir'] ?? null,
-            ]);
-
-        }
-
-        return $record;
+    foreach ($data['variations'] as $variation) {
+        $sku = ProductSKU::create([
+            'sku' => $variation['sku'] ?? $this->generateSKU($variation),
+            'product_id' => $record->id,
+            'attributes' => json_encode($variation['attributes']),
+            'stock' => $variation['stock'],
+            'price' => $variation['price'],
+            'sku_image' => isset($variation['sku_image'])
+                ? (is_array($variation['sku_image']) ? $variation['sku_image'][0] : $variation['sku_image'])
+                : null, // Ensure it's correctly formatted
+        ]);
     }
+
+    return $record;
+}
 
     private function generateSKU($combination): string
     {

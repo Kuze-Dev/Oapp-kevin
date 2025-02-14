@@ -4,16 +4,16 @@ namespace App\Filament\Resources;
 
 use Filament\Forms;
 use Filament\Tables;
+use App\Models\Product;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
-use Filament\Resources\Pages\Page;
 use Filament\Resources\Resource;
+use Filament\Resources\Pages\Page;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Repeater;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\TextInput;
 use Filament\Tables\Columns\ImageColumn;
-use App\Models\Product;
 use App\Filament\Resources\ProductResource\Pages;
 
 class ProductResource extends Resource
@@ -122,17 +122,18 @@ class ProductResource extends Resource
             'index' => Pages\ListProducts::route('/'),
             'create' => Pages\CreateProduct::route('/create'),
             'edit' => Pages\EditProduct::route('/{record}/edit'),
-             'variance'=>Pages\ProductVariants::route('/{record}/variance'),
+            'variance'=> Pages\ProductVariants::route('/{record}/variance'),
 
         ];
     }
 
     public static function getRecordSubNavigation(Page $page): array
-    {
-        return $page->generateNavigationItems([
-            Pages\EditProduct::class,
-            Pages\ProductVariants::class,
+{
+    return $page->generateNavigationItems([
+        Pages\EditProduct::class,
+        Pages\ProductVariants::class,
+    ]);
+}
 
-        ]);
-    }
+
 }

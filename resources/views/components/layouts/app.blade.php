@@ -12,6 +12,8 @@
     <!-- Heroicons CDN -->
 <link href="https://unpkg.com/heroicons@1.0.6/outline.css" rel="stylesheet">
 
+  <!-- Include Livewire styles -->
+  @livewireStyles
 
 
 </head>
@@ -33,7 +35,7 @@
     <livewire:footer />
 
 
-
+    @livewireScripts
 </body>
 
     <script>

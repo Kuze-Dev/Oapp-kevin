@@ -12,14 +12,19 @@ use Illuminate\Support\Str;
 use App\Models\ProductAttribute;
 use Filament\Resources\Resource;
 use App\Models\ProductAttributeValues;
+use Filament\Tables\Columns\ImageColumn;
 use App\Filament\Resources\ProductSKUResource\Pages;
 
 class ProductSKUResource extends Resource
 {
     protected static ?string $model = ProductSKU::class;
     protected static ?string $navigationGroup = 'Shop Management';
-    protected static ?string $navigationLabel = 'Product SKUs';
-    protected static ?string $navigationIcon = 'heroicon-o-cube';
+    protected static ?string $navigationLabel = 'Product SKU';
+    protected static ?string $navigationIcon = 'heroicon-o-tag';
+    public static function getNavigationBadge(): ?string
+    {
+        return static::getModel()::count();
+    }
 
     public static function form(Form $form): Form
     {
@@ -80,6 +85,8 @@ class ProductSKUResource extends Resource
                     ->label('Attribute IDs')
                     ->formatStateUsing(fn ($state) => self::extractAttributeIds($state))
                     ->sortable(),
+                    ImageColumn::make('sku_image'),
+
 
                 Tables\Columns\TextColumn::make('sku')
                     ->label('SKU')

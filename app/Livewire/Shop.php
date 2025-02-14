@@ -2,13 +2,10 @@
 
 namespace App\Livewire;
 
-use Log;
-use session;
-use App\Models\Brand;
-use App\Models\Product;
 use Livewire\Component;
+use App\Models\Product;
+use App\Models\Brand;
 use App\Models\Category;
-
 
 class Shop extends Component
 {
@@ -16,21 +13,32 @@ class Shop extends Component
     public $brandId;
     public $search;
     public $cart = [];
+    public $showModal = false;
+    public $selectedProduct;
 
     public function mount()
     {
-        // Load cart from session if available
         $this->cart = session()->get('cart', []);
+    }
+
+    public function openModal($productId)
+    {
+      $this->selectedProduct = Product::find($productId);
+        $this->showModal = true;
+    }
+
+    public function closeModal()
+    {
+        $this->showModal = false;
+        $this->selectedProduct = null;
     }
 
     public function addToCart($productId)
     {
         $product = Product::findOrFail($productId);
 
-        // Retrieve the existing cart from session
         $cart = session()->get('cart', []);
 
-        // Add product to cart if not already added
         if (!isset($cart[$productId])) {
             $cart[$productId] = [
                 'id' => $product->id,
@@ -43,18 +51,11 @@ class Shop extends Component
             ];
         }
 
-        // Store the updated cart in the session
         session()->put('cart', $cart);
         session()->save();
 
-        // Reload the cart variable
         $this->cart = session()->get('cart');
-
-        // Emit event to update Cart component
         $this->dispatch('cartUpdated');
-
-        // Debugging
-        Log::info('Session After Adding:', ['cart' => session()->get('cart')]);
     }
 
     public function render()

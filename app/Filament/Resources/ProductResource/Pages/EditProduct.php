@@ -9,6 +9,10 @@ use Filament\Resources\Pages\EditRecord;
 class EditProduct extends EditRecord
 {
     protected static string $resource = ProductResource::class;
+    public static function getNavigationGroup(): ?string
+{
+    return 'Product Management';
+}
 
     protected function getHeaderActions(): array
     {
@@ -17,4 +21,8 @@ class EditProduct extends EditRecord
             Actions\DeleteAction::make(),
         ];
     }
+
+
+
+
 }
