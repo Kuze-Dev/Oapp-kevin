@@ -14,6 +14,7 @@ use Filament\Forms\Components\Repeater;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\TextInput;
 use Filament\Tables\Columns\ImageColumn;
+use Filament\Forms\Components\RichEditor;
 use App\Filament\Resources\ProductResource\Pages;
 
 class ProductResource extends Resource
@@ -27,53 +28,79 @@ class ProductResource extends Resource
         return static::getModel()::count();
     }
 
-    public static function form(Form $form): Form
-    {
-        return $form
-            ->schema([
-                Forms\Components\Grid::make(2)
-                    ->schema([
-                        Forms\Components\Section::make('Product Information')
-                            ->schema([
-                                TextInput::make('name')->required()->maxLength(255),
-                                Forms\Components\Textarea::make('description')->required()->columnSpanFull(),
-                                Forms\Components\FileUpload::make('product_image')->image()
-                                    ->panelLayout('integrated')->extraAttributes(['style' => 'height: 100%; min-height: 200px;']),
-                            ])->columnSpan(1),
-                        Forms\Components\Section::make('Product Details')
-                            ->schema([
-                                TextInput::make('price')->numeric()->required()->default(0.00)->prefix('PHP'),
-                                TextInput::make('stock')->numeric()->required()->default(0),
-                                Select::make('brand_id')->relationship('brand', 'name')->required(),
-                                Select::make('category_id')->relationship('category', 'name')->required(),
-                                Select::make('status')->label('Product Status')
-                                    ->options([
-                                        'Stock In' => 'Stock In',
-                                        'Sold Out' => 'Sold Out',
-                                        'Coming Soon' => 'Coming Soon',
-                                    ])->required(),
-                            ])->columnSpan(1),
-                    ]),
-                Forms\Components\Section::make('Product Attributes')
-                    ->schema([
-                        Repeater::make('Product_Attributes')->relationship('productAttributes')
-                            ->schema([
-                                Select::make('type')->label('Product Attributes')->options([
-                                    'color' => 'Color',
-                                    'sizes' => 'Sizes',
-                                    'metadata' => 'Metadata',
-                                ])->reactive()
-                                    ->disableOptionWhen(fn (string $value,callable $get):bool=>
-                                    in_array($value,array_column($get('../../Product_Attributes') ?? [],'type'))),
+   public static function form(Form $form): Form
+{
+    return $form
+        ->schema([
+            // Creating a 2-column layout
+            Forms\Components\Grid::make(2)
+                ->schema([
+                    // Product Information in the left column
+                    Forms\Components\Section::make('Product Information')
+                        ->schema([
+                            TextInput::make('name')->required()->maxLength(255),
+                            RichEditor::make('description')->required()->columnSpanFull(),
+                            Forms\Components\FileUpload::make('product_image')->image()
+                                ->panelLayout('integrated')->extraAttributes(['style' => 'height: 100%; min-height: 200px;']),
+                        ])->columnSpan(1),  // Left column (Product Information)
 
-                                Repeater::make('Product_Values')->relationship('productAttributeValues')
-                                    ->schema([
-                                        TextInput::make('value')->label('Product Attribute Values')->required(),
-                                    ]),
-                            ])->collapsible()->defaultItems(1),
-                    ]),
-            ]);
-    }
+                    // Pricing & Stock + Category & Brand in the right column
+                    Forms\Components\Section::make('Pricing & Product Details')
+                        ->schema([
+                            Forms\Components\Grid::make(2) // Nested grid for right side content
+                                ->schema([
+                                    // Pricing & Stock in the first column of the right section
+                                    Forms\Components\Section::make('Pricing & Stock')
+                                        ->schema([
+                                            TextInput::make('price')->numeric()->required()->default(0.00)->prefix('PHP'),
+                                            TextInput::make('stock')->numeric()->required()->default(0),
+                                            Forms\Components\Toggle::make('featured')->label('Featured')->default(false), // Add featured toggle
+                                        ]),
+
+                                    // Category & Brand in the second column of the right section
+                                    Forms\Components\Section::make('Category & Brand')
+                                        ->schema([
+                                            Select::make('category_id')->relationship('category', 'name')->required(),
+                                            Select::make('brand_id')->relationship('brand', 'name')->required(),
+                                        ]),
+                                ]),
+                        ])->columnSpan(1),  // Right column (Pricing & Stock + Category & Brand)
+                ]),
+
+            // Product Status section in a separate section below
+            Forms\Components\Section::make('Product Status')
+                ->schema([
+                    Select::make('status')->label('Product Status')
+                        ->options([
+                            'Stock In' => 'Stock In',
+                            'Sold Out' => 'Sold Out',
+                            'Coming Soon' => 'Coming Soon',
+                        ])->required(),
+                ]),
+
+            // Product Attributes section with Repeater for attributes and values
+            Forms\Components\Section::make('Product Attributes')
+                ->schema([
+                    Repeater::make('Product_Attributes')->relationship('productAttributes')
+                        ->schema([
+                            Select::make('type')->label('Product Attributes')->options([
+                                'color' => 'Color',
+                                'sizes' => 'Sizes',
+                                'metadata' => 'Metadata',
+                            ])->reactive()
+                                ->disableOptionWhen(fn (string $value, callable $get): bool =>
+                                    in_array($value, array_column($get('../../Product_Attributes') ?? [], 'type'))),
+
+                            Repeater::make('Product_Values')->relationship('productAttributeValues')
+                                ->schema([
+                                    TextInput::make('value')->label('Product Attribute Values')->required(),
+                                ]),
+                        ])->collapsible()->defaultItems(1),
+                ]),
+
+        ]);
+}
+
 
     public static function table(Table $table): Table
     {

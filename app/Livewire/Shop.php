@@ -13,50 +13,13 @@ class Shop extends Component
     public $brandId;
     public $search;
     public $cart = [];
-    public $showModal = false;
-    public $selectedProduct;
 
     public function mount()
     {
         $this->cart = session()->get('cart', []);
     }
 
-    public function openModal($productId)
-    {
-      $this->selectedProduct = Product::find($productId);
-        $this->showModal = true;
-    }
 
-    public function closeModal()
-    {
-        $this->showModal = false;
-        $this->selectedProduct = null;
-    }
-
-    public function addToCart($productId)
-    {
-        $product = Product::findOrFail($productId);
-
-        $cart = session()->get('cart', []);
-
-        if (!isset($cart[$productId])) {
-            $cart[$productId] = [
-                'id' => $product->id,
-                'name' => $product->name,
-                'description' => $product->description,
-                'product_image' => $product->product_image,
-                'status' => $product->status,
-                'category_id' => $product->category_id,
-                'brand_id' => $product->brand_id,
-            ];
-        }
-
-        session()->put('cart', $cart);
-        session()->save();
-
-        $this->cart = session()->get('cart');
-        $this->dispatch('cartUpdated');
-    }
 
     public function render()
     {
@@ -73,3 +36,4 @@ class Shop extends Component
         return view('livewire.shop', compact('products', 'categories', 'brands'));
     }
 }
+

@@ -32,8 +32,9 @@ return new class extends Migration
             $table->foreignId('brand_id')->constrained()->onDelete('cascade');
             $table->foreignId('category_id')->constrained()->onDelete('cascade');
             $table->decimal('price', 10, 2)->default(0.00);
-    $table->integer('stock')->default(0); // Added stock column (default 0)
-            $table->enum('status', ['Stock In', 'Sold Out', 'Coming Soon']); // Updated status column without default
+            $table->integer('stock')->default(0); // Added stock column (default 0)
+            $table->enum('status', ['Stock In', 'Sold Out', 'Coming Soon']);
+            $table->boolean('featured')->default(false); // Updated status column without default
             $table->timestamps();
         });
     }

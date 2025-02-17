@@ -21,7 +21,8 @@ class Product extends Model
         'category_id',
         'price',
         'stock',
-        'status'
+        'status',
+        'featured',
     ];
 
     public function brand(): BelongsTo

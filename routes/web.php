@@ -4,6 +4,7 @@ use App\Models\Order;
 use App\Livewire\Cart;
 use App\Livewire\Shop;
 use App\Models\Payment;
+use App\Livewire\Product;
 use App\Support\Facades\App;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\OrderController;
@@ -40,4 +41,6 @@ Route::get('/home', function () {
 
 Route::get('/shop', Shop::class)->name('shop');
 Route::get('/cart', Cart::class)->name('cart');
+Route::get('/product/{id}', Product::class)->name('product.show');
+
 

@@ -68,6 +68,7 @@ class ShopSeeder extends Seeder
                 'status' => 'Stock In',
                 'category_id' => $electronics->id,
                 'brand_id' => $apple->id,
+                'featured' => true, // Mark as featured
             ],
             [
                 'name' => 'Samsung Galaxy S23',
@@ -76,6 +77,7 @@ class ShopSeeder extends Seeder
                 'status' => 'Stock In',
                 'category_id' => $electronics->id,
                 'brand_id' => $samsung->id,
+                'featured' => false, // Not featured
             ],
             [
                 'name' => 'Nike Air Max',
@@ -84,6 +86,7 @@ class ShopSeeder extends Seeder
                 'status' => 'Stock In',
                 'category_id' => $fashion->id,
                 'brand_id' => $nike->id,
+                'featured' => true, // Mark as featured
             ],
             [
                 'name' => 'Adidas Ultraboost',
@@ -92,6 +95,7 @@ class ShopSeeder extends Seeder
                 'status' => 'Stock In',
                 'category_id' => $fashion->id,
                 'brand_id' => $adidas->id,
+                'featured' => false, // Not featured
             ],
             [
                 'name' => 'Air Fryer',
@@ -100,6 +104,7 @@ class ShopSeeder extends Seeder
                 'status' => 'Stock In',
                 'category_id' => $home->id,
                 'brand_id' => $noBrand->id, // Assign default "No Brand" instead of NULL
+                'featured' => true, // Mark as featured
             ],
         ];
 
