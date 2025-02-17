@@ -2,7 +2,7 @@
 
 namespace App\Livewire;
 
-use session;
+use App\Models\Product; // Make sure to import the Product model
 use Livewire\Component;
 
 class Cart extends Component
@@ -14,11 +14,18 @@ class Cart extends Component
     public function mount()
     {
         $this->loadCart();
+        // dd( $this->cart );
     }
 
     public function loadCart()
     {
-        $this->cart = session()->get('cart', []);
+        // Assuming the cart contains product IDs as keys, and quantities as values
+        $cartData = session()->get('cart', []);
+
+        // Retrieve the actual products along with their brands
+        $this->cart = Product::whereIn('id', array_keys($cartData))
+                             ->with('brand')  // Load the brand relation
+                             ->get();
     }
 
     public function removeFromCart($productId)

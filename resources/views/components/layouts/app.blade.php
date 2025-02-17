@@ -32,6 +32,13 @@
 <livewire:cart />
 @endif
 
+
+@if(request()->routeIs('product.show'))
+    <livewire:product :id="request()->route('id')"/>
+@endif
+
+
+
     <livewire:footer />
 
 
