@@ -12,6 +12,8 @@ class ProductAttributeValues extends Model
     protected $fillable = [
         'product_attribute_id',
         'value',
+        'colorcode',
+        'image',
     ];
 
 
@@ -20,9 +22,9 @@ class ProductAttributeValues extends Model
         return $this->belongsTo(ProductAttribute::class);
     }
 
-    public function product(): BelongsTo
-    {
-        return $this->belongsTo(Product::class);
-    }
+    // public function product(): BelongsTo
+    // {
+    //     return $this->belongsTo(Product::class);
+    // }
 
 }

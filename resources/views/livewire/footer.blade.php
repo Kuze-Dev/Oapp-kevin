@@ -37,7 +37,7 @@
                 <div>
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Newsletter</h3>
                     <form class="flex flex-col sm:flex-row">
-                        <input type="email" placeholder="Your email" class="px-4 py-2 w-full sm:w-auto rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 dark:bg-gray-700 dark:text-white mb-2 sm:mb-0 sm:mr-2">
+                        <input id=email type="email" autocomplete="email" placeholder="Your email" class="px-4 py-2 w-full sm:w-auto rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 dark:bg-gray-700 dark:text-white mb-2 sm:mb-0 sm:mr-2">
                         <button type="submit" class="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors duration-200">Subscribe</button>
                     </form>
                 </div>

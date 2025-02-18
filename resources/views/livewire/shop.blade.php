@@ -4,7 +4,7 @@
     <div class="mb-8 space-y-4 sm:space-y-0 sm:flex sm:items-center sm:space-x-4">
         <!-- Search Bar -->
         <div class="relative flex-grow">
-            <input wire:model.live.debounce.500ms="search" type="text" placeholder="Search products..."
+            <input wire:model.live.debounce.500ms="search" id="search" type="text" placeholder="Search products..."
                 class="w-full pl-10 pr-4 py-3 rounded-full border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 transition-all duration-300 shadow-md hover:shadow-lg">
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"
@@ -18,7 +18,7 @@
 
         <!-- Category Filter -->
         <div class="relative">
-            <select wire:model.live="categoryId"
+            <select wire:model.live="categoryId" id="category"
                 class="appearance-none w-full bg-white border border-gray-300 rounded-full pl-4 pr-10 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-500 shadow-md">
                 <option value="">All Categories</option>
                 @foreach($categories as $category)
@@ -55,16 +55,19 @@
         @forelse($products as $product)
             <div class="bg-white rounded-xl shadow-lg overflow-hidden transform transition-all duration-300 hover:scale-105 hover:shadow-2xl">
                 <div class="relative">
-                    <img src="https://picsum.photos/400/300?random={{ $product->id }}" alt="product"
-                        class="w-full h-64 object-cover rounded-t-xl">
+                <img src="{{ $product->product_image ? asset('storage/' . $product->product_image) : 'https://picsum.photos/800/600?random=' . $product->id }}"
+     alt="{{ $product->name }}"
+     class="w-full h-64 object-cover"
+     onerror="this.onerror=null;this.src='https://picsum.photos/800/600';">
                     <div class="absolute top-4 left-4 bg-black bg-opacity-60 text-white px-4 py-2 rounded-md">
                         {{ $product->brand->name ?? 'No Brand' }}
                     </div>
                 </div>
                 <div class="p-6">
                     <h2 class="text-xl font-semibold mb-2 text-gray-800">{{ $product->name }}</h2>
-                    <p class="mb-2 text-gray-600">{{ $product->description }}</p>
-                    <p class="mb-4 {{ $product->status == 'Stock In' ? 'text-green-500' : ($product->status == 'Sold Out' ? 'text-red-500' : ($product->status == 'Coming Soon' ? 'text-yellow-500' : 'text-gray-500')) }}">
+                    <p class="mb-2 text-gray-600 font-sans">{!! $product->description !!}</p>
+
+                    <p class="mb-4  {{ $product->status == 'Stock In' ? 'text-green-500' : ($product->status == 'Sold Out' ? 'text-red-500' : ($product->status == 'Coming Soon' ? 'text-yellow-500' : 'text-gray-500')) }}">
                         @if ($product->status == 'Stock In')
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 inline-block mr-2" viewBox="0 0 20 20" fill="currentColor">
                                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1.707-10.707a1 1 0 00-1.414 0L9 9.586 8.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4a1 1 0 000-1.414z" clip-rule="evenodd" />
@@ -87,13 +90,17 @@
                     <p class="text-lg font-semibold text-gray-800">{{ $product->price }} PHP</p>
                     <div class="flex justify-between items-center mt-4">
                     <a href="/product/{{ $product->id }}" wire:navigate="product({{ $product->id }})">
-    <button class="px-5 py-3 bg-indigo-600 text-white font-semibold rounded-lg flex hover:bg-indigo-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 shadow-md transform hover:scale-105">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="h-5 w-5 mr-2 text-white" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M5 3a1 1 0 011-1h2.268a1 1 0 01.95.684L9.936 3H10a1 1 0 011 1v1h7a1 1 0 011 1v11a1 1 0 01-1 1H4a1 1 0 01-1-1V6a1 1 0 011-1h1V3zm1 2h7l.72 2.16-1.44 4.72a1 1 0 01-1.13.7L6 9.6 4.72 7.36 6 5z" clip-rule="evenodd" />
+    <button class="px-5 py-3 bg-indigo-600 text-white font-semibold rounded-lg flex items-center space-x-1 hover:bg-indigo-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 shadow-lg transform hover:scale-105">
+        <!-- Magnifying Glass Icon for View Details -->
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10 2a8 8 0 11-8 8 8 8 0 018-8zm0 16a7.93 7.93 0 01-4.8-1.68l-4.72 4.72a1 1 0 001.42 1.42l4.72-4.72A7.93 7.93 0 0110 18zm5-5a5 5 0 10-10 0 5 5 0 0010 0z"/>
         </svg>
-        View Details
+        <span>View Details</span>
     </button>
 </a>
+
+
+
 
                     </div>
                 </div>

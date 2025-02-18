@@ -14,7 +14,10 @@ use Filament\Forms\Components\Repeater;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\TextInput;
 use Filament\Tables\Columns\ImageColumn;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\RichEditor;
+use Filament\Forms\Components\ColorPicker;
+use Filament\Tables\Columns\BooleanColumn;
 use App\Filament\Resources\ProductResource\Pages;
 
 class ProductResource extends Resource
@@ -93,7 +96,18 @@ class ProductResource extends Resource
 
                             Repeater::make('Product_Values')->relationship('productAttributeValues')
                                 ->schema([
-                                    TextInput::make('value')->label('Product Attribute Values')->required(),
+                                    TextInput::make('value')
+                                    ->label('Product Attribute Values')
+                                    ->required(),
+                                    ColorPicker::make('colorcode')
+                                    ->label('pick a color')
+                                    ->required()
+                                    ->hidden(fn (callable $get) => $get('../../type') !== 'color'),
+                                    FileUpload::make('image')
+                                    ->label('Image')
+                                    ->hidden(fn (callable $get) => $get('../../type') !== 'color')
+                                    ->image(),
+
                                 ]),
                         ])->collapsible()->defaultItems(1),
                 ]),
@@ -110,6 +124,15 @@ class ProductResource extends Resource
                 ImageColumn::make('product_image'),
                 TextColumn::make('brand.name')->sortable(),
                 TextColumn::make('category.name')->sortable(),
+                BooleanColumn::make('featured')->label('Is Featured')
+                ->sortable()
+                ->toggleable(isToggledHiddenByDefault: false)  // Optionally toggle visibility
+                ->icon(fn ($state) => $state ? 'heroicon-o-check-circle' : 'heroicon-o-x-circle')  // Check or cross based on state
+                ->extraAttributes(fn ($state) => [
+                    'class' => $state ? 'bg-yellow-500 text-white' : 'bg-gray-500 text-white', // Background color and icon color
+                ]),
+
+
                 TextColumn::make('status')->label('Product Status')
                     ->color(fn (string $state): string => match ($state) {
                         'Stock In' => 'success',
