@@ -8,9 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css" />
     <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
-    <script src="https://unpkg.com/heroicons@2.0.18/24/solid/index.js"></script>
     <!-- Heroicons CDN -->
-<link href="https://unpkg.com/heroicons@1.0.6/outline.css" rel="stylesheet">
 
   <!-- Include Livewire styles -->
   @livewireStyles
