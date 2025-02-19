@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('product_attribute_id')->constrained('product_attributes')->cascadeOnDelete();
             $table->string('value');
             $table->string('colorcode')->nullable();
-            $table->string('image')->nullable();
+            // $table->string('image')->nullable();
             $table->timestamps();
         });
     }

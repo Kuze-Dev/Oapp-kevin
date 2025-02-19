@@ -13,7 +13,7 @@ class ProductAttributeValues extends Model
         'product_attribute_id',
         'value',
         'colorcode',
-        'image',
+        // 'image',
     ];
 
 

@@ -23,17 +23,28 @@ class Product extends Component
     }
 
     public function updatedSelectedColor($colorCode)
-    {
-        // Find the product attribute value that matches the selected color
-        $attributeValue = $this->product->productAttributes->flatMap(function ($attribute) {
-            return $attribute->productAttributeValues;
-        })->firstWhere('colorcode', $colorCode);
+{
+    // Find the attribute value that has this color code
+    $attributeValue = $this->product->productAttributes
+        ->where('type', 'color')
+        ->flatMap->productAttributeValues
+        ->firstWhere('colorcode', $colorCode);
 
-        // If an attribute value is found with the selected color, update the image
-        if ($attributeValue) {
-            $this->selectedColorImage = $attributeValue->image; // Assuming 'image' is the field storing the color image
+    if ($attributeValue) {
+        // Find SKU based on the actual value, not the colorcode
+        $sku = ProductSKU::where('product_id', $this->product->id)
+            ->whereJsonContains('attributes->attribute1->value', $attributeValue->value)
+            ->first();
+        // If SKU exists, update the image
+        if ($sku) {
+            $this->selectedColorImage = $sku->sku_image;
+        } else {
+            $this->selectedColorImage = $this->product->product_image;
         }
     }
+}
+
+
 
     public function updatedSelectedSize($size)
     {
@@ -69,9 +80,14 @@ class Product extends Component
         session()->put('cart', $cart);
         session()->save();
 
+        // Emit event to update cart count in the header
+        $this->dispatch('cartCountUpdated', count($cart));
         $this->dispatch('cartUpdated');
-    }
 
+        // Emit event to show toast notification
+      $this->dispatch('showToast', ['message' => 'Product added to cart successfully!' ,
+                                    'type' => 'success']);
+    }
     public function increaseQuantity()
     {
         if ($this->quantity < $this->product->stock) {
