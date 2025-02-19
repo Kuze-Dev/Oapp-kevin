@@ -28,9 +28,10 @@
 </div>
 
                     <p class="text-gray-600 dark:text-gray-400 mb-4">{!!Str::limit($product->description, 100) !!}</p>
+                    <span class="text-2xl font-bold text-indigo-600 dark:text-indigo-400">PHP {{ number_format($product->price, 2) }}</span>
                     <div class="flex justify-between items-center mt-4">
-                        <span class="text-2xl font-bold text-indigo-600 dark:text-indigo-400">PHP {{ number_format($product->price, 2) }}</span>
-                        <div class="flex space-x-4">
+
+                        <div class="">
                             <!-- Add to Cart Button -->
                             <a href="/product/{{ $product->id }}" wire:navigate="product({{ $product->id }})">
                             <button
@@ -41,7 +42,9 @@
         <span>View Details</span>
                             </button>
                             </a>
+                        </div>
 
+                        <div class="flex items-center space-x-2">
                             <!-- Like Button -->
                             <button class="p-2 hover:bg-gray-200 rounded-full group">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 group-hover:fill-red-500 group-hover:stroke-none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">

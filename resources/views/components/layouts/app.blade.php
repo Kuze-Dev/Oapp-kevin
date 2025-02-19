@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css" />
     <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
     <!-- Heroicons CDN -->
-
+    <script src="{{ mix('js/app.js') }}"></script>
   <!-- Include Livewire styles -->
   @livewireStyles
 
@@ -17,6 +17,7 @@
 </head>
 <body class="font-sans antialiased bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100">
     <livewire:header />
+    <livewire:toast-notification />
 
     @yield('content')
 
@@ -41,6 +42,7 @@
 
 
     @livewireScripts
+
 </body>
 
     <script>
@@ -87,5 +89,22 @@ document.addEventListener('DOMContentLoaded', function() {
         menuClicked();
     });
 });
+
+
+
+window.addEventListener('toastHide', event => {
+        setTimeout(() => {
+            document.querySelector('#toast').style.display = 'none';
+        }, 3000);  // Hide the toast after 3 seconds
+    });
+
+    window.addEventListener('toastShow', event => {
+        document.querySelector('#toast').innerText = event.detail.message;
+        document.querySelector('#toast').style.display = 'block';  // Show the toast
+    });
+
+
+
+
 </script>
 </html>

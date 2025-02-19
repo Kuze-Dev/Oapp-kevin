@@ -1,7 +1,8 @@
 <div class="inset-0 overflow-y-auto mt-12 py-12 w-full flex justify-center items-center">
+
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-6xl m-4 overflow-hidden">
         <div class="flex flex-col lg:flex-row p-8 space-y-6 lg:space-y-0">
-           <!-- Product Image and Brand -->
+            <!-- Product Image and Brand -->
             <div class="w-full lg:w-1/2 mb-6 lg:mb-0 relative">
                 <div class="bg-black bg-opacity-60 text-white px-4 py-2 rounded-md text-sm font-semibold absolute top-4 left-4 z-10">
                     {{ $product->brand->name ?? 'No Brand' }}
@@ -14,9 +15,10 @@
                     </div>
                 @endif
 
-                <img src="{{ $selectedColorImage ? asset('storage/' . $selectedColorImage) : ($product->product_image ? asset('storage/' . $product->product_image) : 'https://picsum.photos/800/600?random=' . $product->id) }}"
-                    alt="{{ $product->name }}"
-                    class="w-full h-full object-cover rounded-t-xl rounded-b-xl">
+                <img src="{{ $selectedColorImage ? asset('storage/' . $selectedColorImage) : asset('storage/' . $product->product_image) }}"
+    alt="{{ $product->name }}"
+    class="w-full h-full object-cover rounded-t-xl rounded-b-xl">
+
             </div>
 
             <!-- Product Details -->
@@ -34,7 +36,8 @@
                             <h3 class="font-semibold text-gray-800 text-lg">Color:</h3>
                             <div class="flex flex-wrap space-x-4">
                                 @foreach ($attribute->productAttributeValues as $value)
-                                    <button wire:click="$set('selectedColor', '{{ $value->colorcode }}')" class="w-10 h-10 rounded-full focus:outline-none transform transition-all hover:scale-125 ring-2 ring-indigo-600 {{ $selectedColor === $value->colorcode ? 'border-4 border-indigo-600' : '' }}"
+                                    <button wire:click="$set('selectedColor', '{{ $value->colorcode }}')"
+                                        class="w-10 h-10 rounded-full focus:outline-none transform transition-all hover:scale-125 ring-2 ring-indigo-600 {{ $selectedColor === $value->colorcode ? 'border-4 border-indigo-600' : '' }}"
                                         style="background-color: {{ $value->colorcode }}"></button>
                                 @endforeach
                             </div>
@@ -44,7 +47,8 @@
                             <h3 class="font-semibold text-gray-800 text-lg">Size:</h3>
                             <div class="flex flex-wrap space-x-3">
                                 @foreach ($attribute->productAttributeValues as $value)
-                                    <button wire:click="$set('selectedSize', '{{ $value->value }}')" class="w-12 h-12 rounded-full border-2 border-gray-300 hover:bg-indigo-500 hover:text-white focus:outline-none transition-all {{ $selectedSize === $value->value ? 'bg-indigo-600 text-white' : '' }}">
+                                    <button wire:click="$set('selectedSize', '{{ $value->value }}')"
+                                        class="w-12 h-12 rounded-full border-2 border-gray-300 hover:bg-indigo-500 hover:text-white focus:outline-none transition-all {{ $selectedSize === $value->value ? 'bg-indigo-600 text-white' : '' }}">
                                         {{ $value->value }}
                                     </button>
                                 @endforeach

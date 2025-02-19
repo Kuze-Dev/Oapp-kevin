@@ -103,10 +103,10 @@ class ProductResource extends Resource
                                     ->label('pick a color')
                                     ->required()
                                     ->hidden(fn (callable $get) => $get('../../type') !== 'color'),
-                                    FileUpload::make('image')
-                                    ->label('Image')
-                                    ->hidden(fn (callable $get) => $get('../../type') !== 'color')
-                                    ->image(),
+                                    // FileUpload::make('image')
+                                    // ->label('Image')
+                                    // ->hidden(fn (callable $get) => $get('../../type') !== 'color')
+                                    // ->image(),
 
                                 ]),
                         ])->collapsible()->defaultItems(1),

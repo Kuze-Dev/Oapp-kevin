@@ -101,7 +101,7 @@ class ProductSKUResource extends Resource
                     ->sortable(),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
+                // Tables\Actions\ViewAction::make(),
 
             ])
             ->bulkActions([

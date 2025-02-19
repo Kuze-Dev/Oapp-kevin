@@ -14,6 +14,8 @@ class EditProduct extends EditRecord
     return 'Product Management';
 }
 
+
+
     protected function getHeaderActions(): array
     {
         return [

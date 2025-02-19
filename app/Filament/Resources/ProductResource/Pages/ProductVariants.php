@@ -13,17 +13,23 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\FileUpload;
 use Filament\Resources\Pages\EditRecord;
 use App\Filament\Resources\ProductResource;
+use Filament\Forms\Components\Tabs;
+use Filament\Resources\Pages\Page;
+
 
 
 class ProductVariants extends EditRecord
 {
     protected static string $resource = ProductResource::class;
     protected static ?string $navigationIcon = 'heroicon-o-archive-box';
-
     public static function getNavigationGroup(): ?string
-{
-    return 'Product Management';
-}
+    {
+        return 'Product Management';
+    }
+//     public static function getNavigationGroup(): ?string
+// {
+//     return 'Product Management';
+// }
 
 
 
@@ -35,6 +41,8 @@ class ProductVariants extends EditRecord
                 ->collapsible()
                 ->defaultItems(1)
                 ->columnSpan(2)
+                ->disableItemCreation() // Prevent adding new variations
+                ->disableItemDeletion() // Prevent removing variations
                 ->schema([
                     Section::make('Variation Details')
                         ->columns(2)
