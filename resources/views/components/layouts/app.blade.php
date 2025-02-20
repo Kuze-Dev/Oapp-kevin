@@ -81,8 +81,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-
-
     // Fix issue: Close menu when Livewire navigates
     document.addEventListener("livewire:navigated", () => {
         // mobileMenu.classList.add('hidden');
@@ -92,16 +90,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-window.addEventListener('toastHide', event => {
-        setTimeout(() => {
-            document.querySelector('#toast').style.display = 'none';
-        }, 3000);  // Hide the toast after 3 seconds
-    });
-
-    window.addEventListener('toastShow', event => {
-        document.querySelector('#toast').innerText = event.detail.message;
-        document.querySelector('#toast').style.display = 'block';  // Show the toast
-    });
 
 
 
