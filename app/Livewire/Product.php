@@ -22,30 +22,32 @@ class Product extends Component
         $this->price = $this->product->price;
         $this->selectedColorImage = $this->product->product_image;
 
-        // Assuming you want to set default size from product attributes
-        $this->setDefaultSize();
+        // Set default size from product attributes
+        $this->setDefaultAttributes();
     }
 
-    // Set the default size, assuming size is an attribute
-    public function setDefaultSize()
+    // Set default color and size
+    public function setDefaultAttributes()
     {
-        // Fetch the first available size from the product's attributes
-        $sizeAttribute = $this->product->productAttributes
-            ->where('type', 'size') // Make sure the attribute type is 'size'
-            ->first();
-
+        // Set default size
+        $sizeAttribute = $this->product->productAttributes->where('type', 'sizes')->first();
         if ($sizeAttribute) {
             $this->selectedSize = $sizeAttribute->productAttributeValues->first()->value;
+            $this->sizeAttributeId = $sizeAttribute->id; // Store size attribute ID
+        }
+
+        // Set default color
+        $colorAttribute = $this->product->productAttributes->where('type', 'color')->first();
+        if ($colorAttribute) {
+            $this->selectedColor = $colorAttribute->productAttributeValues->first()->value;
+            $this->colorAttributeId = $colorAttribute->id; // Store color attribute ID
         }
     }
 
     public function updatedSelectedColor($colorCode)
     {
-        // Find the color value based on the selected color code
-        $attributeValue = $this->product->productAttributes
-            ->where('type', 'color')
-            ->flatMap->productAttributeValues
-            ->firstWhere('colorcode', $colorCode);
+        // Find color attribute value based on selected color code
+        $attributeValue = $this->product->productAttributes->where('type', 'color')->flatMap->productAttributeValues->firstWhere('colorcode', $colorCode);
 
         if ($attributeValue) {
             $this->selectedColor = $attributeValue->value;
@@ -55,24 +57,39 @@ class Product extends Component
 
     public function updatedSelectedSize($size)
     {
-        // Ensure the selected size is valid and update the SKU accordingly
+        // Ensure the selected size is valid and update the SKU
         $this->selectedSize = $size;
         $this->updateSKU();
     }
 
     private function updateSKU()
     {
-        // Query for the SKU based on selected color and size
+        // Build SKU query based on selected attributes dynamically
         $query = ProductSKU::where('product_id', $this->product->id);
 
-        if ($this->selectedColor) {
-            $query->whereJsonContains('attributes->attribute1->value', $this->selectedColor);
+        // Loop through the product's attributes to apply dynamic filters
+        foreach ($this->product->productAttributes as $attribute) {
+            $attributeType = $attribute->type;
+            $attributeId = $attribute->id;
+            $selectedValue = null;
+
+            // Check if this attribute is selected by the user (e.g., color, size, etc.)
+            if ($attributeType == 'color') {
+                $selectedValue = $this->selectedColor;
+            } elseif ($attributeType == 'sizes') {
+                $selectedValue = $this->selectedSize;
+            } else {
+                // Handle other attributes dynamically (e.g., material, pattern, etc.)
+                $selectedValue = $this->{"selected{$attributeType}"} ?? null; // Dynamically fetch selected attribute value
+            }
+
+            if ($selectedValue) {
+                // Dynamically apply the JSON filtering based on attribute ID
+                $query->whereJsonContains("attributes->attribute{$attributeId}->value", $selectedValue);
+            }
         }
 
-        if ($this->selectedSize) {
-            $query->whereJsonContains('attributes->attribute2->value', $this->selectedSize);
-        }
-
+        // Fetch the matching SKU
         $sku = $query->first();
 
         if ($sku) {
@@ -84,17 +101,46 @@ class Product extends Component
         }
     }
 
+
     // Add product to the cart
     public function addToCart($productId)
 {
     $product = ProductModel::findOrFail($productId);
     $cart = session()->get('cart', []);
 
-    // Ensure SKU exists for the selected color and size
-    $sku = ProductSKU::where('product_id', $product->id)
-        ->whereJsonContains('attributes->attribute1->value', $this->selectedColor)
-        ->whereJsonContains('attributes->attribute2->value', $this->selectedSize)
-        ->first();
+    // Ensure valid color and size selection
+    if (!$this->selectedColor || !$this->selectedSize) {
+        session()->flash('error', 'Please select a valid color and size.');
+        return;
+    }
+
+    // Find SKU based on selected attributes dynamically
+    $skuQuery = ProductSKU::where('product_id', $product->id);
+
+    // Loop through the product's attributes to dynamically build the SKU query
+    foreach ($this->product->productAttributes as $attribute) {
+        $attributeType = $attribute->type;
+        $attributeId = $attribute->id;
+        $selectedValue = null;
+
+        // Dynamically check for selected attributes
+        if ($attributeType == 'color') {
+            $selectedValue = $this->selectedColor;
+        } elseif ($attributeType == 'sizes') {
+            $selectedValue = $this->selectedSize;
+        } else {
+            // For other attributes (like material, pattern), dynamically use the selected value
+            $selectedValue = $this->{"selected{$attributeType}"} ?? null;
+        }
+
+        if ($selectedValue) {
+            // Dynamically apply the JSON filtering based on attribute ID
+            $skuQuery->whereJsonContains("attributes->attribute{$attributeId}->value", $selectedValue);
+        }
+    }
+
+    // Fetch the matching SKU
+    $sku = $skuQuery->first();
 
     if (!$sku) {
         session()->flash('error', 'Selected combination is not available.');
@@ -105,10 +151,11 @@ class Product extends Component
     $skuImage = $sku->sku_image;
     $price = $sku->price;
 
-    // Cart Key logic: Use both SKU ID and selected size to uniquely identify the item
-    $cartKey = $skuId ? "sku_$skuId" : "product_$productId";
+    // Ensure unique cart key based on product ID and SKU ID
+    $cartKey = "product_{$product->id}_sku_{$skuId}";
+    // dd($cartKey);
 
-    // Add or update cart item
+    // Add or update the cart item
     if (!isset($cart[$cartKey])) {
         $cart[$cartKey] = [
             'id' => $product->id,
@@ -123,14 +170,18 @@ class Product extends Component
             'brand_id' => $product->brand_id,
             'price' => $price,
             'quantity' => $this->quantity,
+            'timestamp' => now()->timestamp,
         ];
     } else {
+        // If item already exists, update the quantity
         $cart[$cartKey]['quantity'] += $this->quantity;
     }
 
+    // Save updated cart in session
     session()->put('cart', $cart);
     session()->save();
 
+    // Dispatch events to update UI
     $this->dispatch('cartCountUpdated', count($cart));
     $this->dispatch('cartUpdated');
     $this->dispatch('showToast', [
@@ -139,6 +190,8 @@ class Product extends Component
     ]);
 }
 
+
+    // Increase product quantity
     public function increaseQuantity()
     {
         if ($this->quantity < $this->product->stock) {
@@ -146,6 +199,7 @@ class Product extends Component
         }
     }
 
+    // Decrease product quantity
     public function decreaseQuantity()
     {
         if ($this->quantity > 1) {

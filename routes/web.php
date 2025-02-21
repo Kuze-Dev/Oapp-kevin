@@ -1,15 +1,15 @@
 <?php
-use App\Models\Order;
 
+use App\Models\Order;
 use App\Livewire\Cart;
 use App\Livewire\Shop;
 use App\Models\Payment;
 use App\Livewire\Product;
-use App\Support\Facades\App;
+use App\Livewire\Auth\Login;
+use App\Livewire\Auth\Register;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PaymentController;
-
 
 Route::get('/', function () {
     return view('welcome');
@@ -31,16 +31,17 @@ Route::controller(PaymentController::class)->group(function () {
     Route::get('payment-cancel', 'paymentCancel')->name('payment.cancel');
 });
 
-
-
-
 Route::get('/home', function () {
     return view('components.layouts.app'); // Correct path to your app.blade.php
 });
 
-
+// Shop, Cart, and Product pages
 Route::get('/shop', Shop::class)->name('shop');
 Route::get('/cart', Cart::class)->name('cart');
 Route::get('/product/{id}', Product::class)->name('product.show');
 
+// Authentication pages
+Route::get('/login', Login::class);
+Route::get('/register', Register::class)->name('register');
 
+// Route::get('/login' , Login::class)->name('login');

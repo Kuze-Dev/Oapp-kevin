@@ -41,12 +41,15 @@
 
     </nav>
     <div class="flex items-center space-x-4">
+    <a href="/login" wire:navigate="login">
     <button class="flex items-center px-4 py-2 text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg transition">
-    <svg class="h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-        <path fill-rule="evenodd" d="M15.75 7.5a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM3 18a7.5 7.5 0 0115 0v.75a.75.75 0 01-.75.75h-13.5a.75.75 0 01-.75-.75V18z" clip-rule="evenodd" />
-    </svg>
-    Login
-</button>
+        <svg class="h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+            <path fill-rule="evenodd" d="M15.75 7.5a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM3 18a7.5 7.5 0 0115 0v.75a.75.75 0 01-.75.75h-13.5a.75.75 0 01-.75-.75V18z" clip-rule="evenodd" />
+        </svg>
+        Login
+    </button>
+</a>
+
 
         <button  id="mobile-menu-button" class=" md:hidden text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 focus:outline-none transition-colors duration-200">
             <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">

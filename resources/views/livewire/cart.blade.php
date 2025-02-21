@@ -14,18 +14,31 @@
                         {{ $item->brand->name ?? 'No Brand' }}
                     </div>
 
+                    <!-- Size Label -->
+                    <div class="absolute top-4 right-4 bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-semibold">
+                        Size: {{ $item->selected_size ?? 'No Size' }}
+                    </div>
+
                     <!-- Product Image -->
-                    <img src="{{ asset('storage/' . ($item->sku_image ?? $item->product_image)) }}"
-                        alt="Product Image" class="w-full h-60 object-cover rounded-t-xl">
+                    <div class="h-60 w-full overflow-hidden flex justify-center items-center">
+                        <img src="{{ asset('storage/' . $item->sku_image) }}"
+                            alt="Product Image" class="h-full w-auto object-cover rounded-t-xl">
+                    </div>
 
                     <!-- Product Details -->
                     <div class="p-6 flex-1">
                         <h2 class="text-2xl font-semibold text-gray-800 mb-2">{{ $item->name }}</h2>
                         <p class="text-gray-600 text-sm mb-4">{{ $item->description }}</p>
 
+                        <!-- Selected Color Label -->
+                        <div class="flex items-center space-x-2 mb-4">
+                            <span class="text-sm font-semibold text-gray-700">Color:</span>
+                            <span class="text-sm font-semibold text-gray-900">{{ $item->selected_color ?? 'No Color' }}</span>
+                        </div>
+
                         <!-- Price and Quantity -->
                         <div class="flex justify-between items-center mt-4">
-                            <span class="text-xl font-bold text-indigo-700">${{ number_format($item->price, 2) }}</span>
+                            <span class="text-xl font-bold text-indigo-700">PHP {{ number_format($item->price, 2) }}</span>
 
                             <!-- Quantity Selector -->
                             <div class="flex items-center space-x-2">
@@ -56,13 +69,25 @@
             @endforeach
         </div>
 
+        <!-- Continue Shopping Button -->
+        <div class="flex justify-center mb-6">
+            <a href="/shop" livewire:navigate
+                class="px-6 py-3 bg-gray-800 text-white font-semibold rounded-lg shadow-md hover:bg-gray-900 transition-all duration-300 flex items-center space-x-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l-5 5 5 5"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 12H6"></path>
+                </svg>
+                <span>Continue Shopping</span>
+            </a>
+        </div>
+
         <!-- Cart Summary Section -->
         <div class="flex bg-gradient-to-r from-indigo-100 to-indigo-300 p-8 rounded-xl shadow-xl transition-all duration-500 ease-in-out mb-12">
             <!-- Cart Total on the Left Side -->
             <div class="flex flex-col items-start mb-6 mr-auto">
                 <h3 class="text-xl font-semibold text-gray-800">Cart Total</h3>
                 <p class="text-3xl font-extrabold text-indigo-700">
-                    ${{ number_format($cart->sum(fn($item) => $item->price * $item->quantity), 2) }}
+                    PHP {{ number_format($cart->sum(fn($item) => $item->price * $item->quantity), 2) }}
                 </p>
             </div>
 

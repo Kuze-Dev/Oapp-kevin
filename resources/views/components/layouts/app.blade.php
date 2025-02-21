@@ -36,6 +36,12 @@
     <livewire:product :id="request()->route('id')"/>
 @endif
 
+@if(request()->routeIs('login'))
+        <livewire:auth.login />
+    @elseif(request()->routeIs('register'))
+        <livewire:auth.register />
+    @endif
+
 
 
     <livewire:footer />
