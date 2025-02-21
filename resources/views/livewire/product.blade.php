@@ -1,5 +1,4 @@
 <div class="inset-0 overflow-y-auto mt-12 py-12 w-full flex justify-center items-center">
-
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-6xl m-4 overflow-hidden">
         <div class="flex flex-col lg:flex-row p-8 space-y-6 lg:space-y-0">
             <!-- Product Image and Brand -->
@@ -16,9 +15,8 @@
                 @endif
 
                 <img src="{{ $selectedColorImage ? asset('storage/' . $selectedColorImage) : asset('storage/' . $product->product_image) }}"
-    alt="{{ $product->name }}"
-    class="w-full h-full object-cover rounded-t-xl rounded-b-xl">
-
+                    alt="{{ $product->name }} image"
+                    class="w-full h-full object-cover rounded-t-xl rounded-b-xl transition-all duration-300 transform hover:scale-105">
             </div>
 
             <!-- Product Details -->
@@ -37,8 +35,10 @@
                             <div class="flex flex-wrap space-x-4">
                                 @foreach ($attribute->productAttributeValues as $value)
                                     <button wire:click="$set('selectedColor', '{{ $value->colorcode }}')"
-                                        class="w-10 h-10 rounded-full focus:outline-none transform transition-all hover:scale-125 ring-2 ring-indigo-600 {{ $selectedColor === $value->colorcode ? 'border-4 border-indigo-600' : '' }}"
-                                        style="background-color: {{ $value->colorcode }}"></button>
+                                        class="w-10 h-10 rounded-full focus:outline-none transform transition-all hover:scale-125 ring-2 ring-indigo-600
+                                        {{ $selectedColor === $value->colorcode ? 'border-4 border-indigo-600 ring-4 ring-indigo-600' : '' }}"
+                                        style="background-color: {{ $value->colorcode }}">
+                                    </button>
                                 @endforeach
                             </div>
                         </div>
@@ -48,7 +48,8 @@
                             <div class="flex flex-wrap space-x-3">
                                 @foreach ($attribute->productAttributeValues as $value)
                                     <button wire:click="$set('selectedSize', '{{ $value->value }}')"
-                                        class="w-12 h-12 rounded-full border-2 border-gray-300 hover:bg-indigo-500 hover:text-white focus:outline-none transition-all {{ $selectedSize === $value->value ? 'bg-indigo-600 text-white' : '' }}">
+                                        class="w-12 h-12 rounded-full border-2 border-gray-300 hover:bg-indigo-500 hover:text-white focus:outline-none transition-all
+                                        {{ $selectedSize === $value->value ? 'bg-indigo-600 text-white' : 'hover:bg-gray-300' }}">
                                         {{ $value->value }}
                                     </button>
                                 @endforeach
@@ -97,7 +98,8 @@
                 <!-- Add to Cart Button -->
                 <div class="mt-6">
                     <button wire:click="addToCart({{ $product->id }})"
-                        class="w-full px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-all ease-in-out duration-300 flex items-center justify-center {{ !$selectedColor || !$selectedSize || $product->stock == 0 ? 'opacity-50 cursor-not-allowed' : '' }}"
+                        class="w-full px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-all ease-in-out duration-300 flex items-center justify-center
+                        {{ !$selectedColor || !$selectedSize || $product->stock == 0 ? 'opacity-50 cursor-not-allowed' : '' }}"
                         {{ !$selectedColor || !$selectedSize || $product->stock == 0 ? 'disabled' : '' }}>
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
