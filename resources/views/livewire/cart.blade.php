@@ -3,15 +3,53 @@
     <div class="text-center mb-12">
         <h1 class="text-5xl font-extrabold text-gray-900 tracking-tight leading-tight">Your Shopping Cart</h1>
     </div>
+    <div class="flex justify-end mb-6">
+            <a href="/shop" livewire:navigate
+                class="px-6 py-3 bg-gray-800 text-white font-semibold rounded-lg shadow-md hover:bg-gray-900 transition-all duration-300 flex items-center space-x-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l-5 5 5 5"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 12H6"></path>
+                </svg>
+                <span>Continue Shopping</span>
+            </a>
+        </div>
 
     @if(count($cart) > 0)
+    <div class="flex justify-between items-center mb-6">
+    <!-- Select All Checkbox -->
+    <div class="flex items-center">
+   <input
+    type="checkbox"
+    wire:model="selectAll"
+    wire:click="toggleSelectAll"
+    class="form-checkbox h-5 w-5 text-indigo-600"
+    @checked($selectAll)
+/>
+
+
+        <label class="ml-2 text-gray-800 font-medium">Select All</label>
+    </div>
+
+    <button wire:click="removeSelectedFromCart"
+        class="px-6 py-2 bg-red-600 text-white font-semibold rounded-lg shadow-md hover:bg-red-700 transition-all duration-300 disabled:opacity-50"
+        @disabled(count($selectedItems) === 0)>
+        <span>Remove Selected</span>
+    </button>
+</div>
+
         <!-- Cart Items Section -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10 mb-12">
             @foreach($cart as $item)
                 <div class="bg-gradient-to-t from-indigo-50 via-white to-indigo-200 rounded-xl shadow-2xl overflow-hidden flex flex-col hover:scale-105 hover:shadow-xl hover:bg-indigo-100 transition-all duration-300 ease-in-out relative">
-                    <!-- Brand Label -->
-                    <div class="absolute top-4 left-4 bg-black bg-opacity-60 text-white px-4 py-2 rounded-md text-sm font-semibold">
+                <div class="absolute top-4 left-4 bg-black bg-opacity-60 text-white px-4 py-2 rounded-md text-sm font-semibold">
                         {{ $item->brand->name ?? 'No Brand' }}
+                    </div>
+
+                    <!-- Selection Checkbox -->
+                    <div class="absolute top-14 left-4">
+                    <input type="checkbox" wire:click="toggleSelection('{{ $item->cart_key }}')" value="{{ $item->cart_key }}" class="form-checkbox h-5 w-5 text-indigo-600" @checked(in_array($item->cart_key, $selectedItems))>
+
+
                     </div>
 
                     <!-- Size Label -->
@@ -70,16 +108,7 @@
         </div>
 
         <!-- Continue Shopping Button -->
-        <div class="flex justify-center mb-6">
-            <a href="/shop" livewire:navigate
-                class="px-6 py-3 bg-gray-800 text-white font-semibold rounded-lg shadow-md hover:bg-gray-900 transition-all duration-300 flex items-center space-x-2">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l-5 5 5 5"></path>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 12H6"></path>
-                </svg>
-                <span>Continue Shopping</span>
-            </a>
-        </div>
+
 
         <!-- Cart Summary Section -->
         <div class="flex bg-gradient-to-r from-indigo-100 to-indigo-300 p-8 rounded-xl shadow-xl transition-all duration-500 ease-in-out mb-12">
@@ -93,7 +122,7 @@
 
             <!-- Checkout Button on the Right Side -->
             <div class="flex justify-end">
-                <button class="px-8 py-4 bg-indigo-600 text-white font-semibold rounded-full hover:bg-indigo-700 transition-all duration-300 ease-in-out transform hover:scale-105">
+                <button wire:click="proceedToCheckout" class="px-8 py-4 bg-indigo-600 text-white font-semibold rounded-full hover:bg-indigo-700 transition-all duration-300 ease-in-out transform hover:scale-105">
                     Proceed to Checkout
                 </button>
             </div>
