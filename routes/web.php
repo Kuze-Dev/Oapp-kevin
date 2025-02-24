@@ -5,6 +5,7 @@ use App\Livewire\Cart;
 use App\Livewire\Shop;
 use App\Models\Payment;
 use App\Livewire\Product;
+use App\Livewire\CheckOut;
 use App\Livewire\Auth\Login;
 use App\Livewire\Auth\Register;
 use Illuminate\Support\Facades\Route;
@@ -39,9 +40,10 @@ Route::get('/home', function () {
 Route::get('/shop', Shop::class)->name('shop');
 Route::get('/cart', Cart::class)->name('cart');
 Route::get('/product/{id}', Product::class)->name('product.show');
+Route::get('/checkout', CheckOut::class)->name('checkout');
 
 // Authentication pages
-Route::get('/login', Login::class);
+Route::get('/login', Login::class)->name('login');;
 Route::get('/register', Register::class)->name('register');
 
 // Route::get('/login' , Login::class)->name('login');
