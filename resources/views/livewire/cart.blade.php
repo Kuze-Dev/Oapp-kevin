@@ -3,6 +3,8 @@
     <div class="text-center mb-12">
         <h1 class="text-5xl font-extrabold text-gray-900 tracking-tight leading-tight">Your Shopping Cart</h1>
     </div>
+    @if(count($cart) > 0)
+
     <div class="flex justify-end mb-6">
             <a href="/shop" livewire:navigate
                 class="px-6 py-3 bg-gray-800 text-white font-semibold rounded-lg shadow-md hover:bg-gray-900 transition-all duration-300 flex items-center space-x-2">
@@ -14,27 +16,32 @@
             </a>
         </div>
 
-    @if(count($cart) > 0)
+
     <div class="flex justify-between items-center mb-6">
     <!-- Select All Checkbox -->
     <div class="flex items-center">
    <input
     type="checkbox"
-    wire:model="selectAll"
-    wire:click="toggleSelectAll"
+    wire:model.live="selectAll"
     class="form-checkbox h-5 w-5 text-indigo-600"
-    @checked($selectAll)
 />
 
 
         <label class="ml-2 text-gray-800 font-medium">Select All</label>
     </div>
-
+    <div class="w-10 h-10 flex items-center justify-center">
+    @if(count($selectedItems) > 0)
     <button wire:click="removeSelectedFromCart"
-        class="px-6 py-2 bg-red-600 text-white font-semibold rounded-lg shadow-md hover:bg-red-700 transition-all duration-300 disabled:opacity-50"
-        @disabled(count($selectedItems) === 0)>
-        <span>Remove Selected</span>
+        class="p-2 bg-red-600 text-white rounded-full shadow-md hover:bg-red-700 transition-all duration-300">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 6h18M8 6V4h8v2m2 0h-12m1 0V4m5 16H9m0 0V10m6 10V10m-3 10V10m-6-6h12" />
+        </svg>
     </button>
+@endif
+</div>
+
+
+
 </div>
 
         <!-- Cart Items Section -->
@@ -47,7 +54,8 @@
 
                     <!-- Selection Checkbox -->
                     <div class="absolute top-14 left-4">
-                    <input type="checkbox" wire:click="toggleSelection('{{ $item->cart_key }}')" value="{{ $item->cart_key }}" class="form-checkbox h-5 w-5 text-indigo-600" @checked(in_array($item->cart_key, $selectedItems))>
+                    <input type="checkbox"
+                    wire:model.live="selectedItems" value="{{ $item->cart_key }}" class="form-checkbox h-5 w-5 text-indigo-600">
 
 
                     </div>

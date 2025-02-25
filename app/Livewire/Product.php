@@ -10,6 +10,7 @@ class Product extends Component
 {
     public $product;
     public $selectedColor;
+    public $selectedColorCode; // Add this property to store the color code
     public $selectedSize;
     public $quantity = 1;
     public $selectedColorImage = null;
@@ -39,13 +40,22 @@ class Product extends Component
         // Set default color
         $colorAttribute = $this->product->productAttributes->where('type', 'color')->first();
         if ($colorAttribute) {
-            $this->selectedColor = $colorAttribute->productAttributeValues->first()->value;
+            $attributeValue = $colorAttribute->productAttributeValues->first();
+            $this->selectedColor = $attributeValue->value;
+            $this->selectedColorCode = $attributeValue->colorcode; // Store the color code
             $this->colorAttributeId = $colorAttribute->id; // Store color attribute ID
+            $this->selectedSize = null;
+            $this->selectedColor = null;
+            $this->selectedColorCode = null;
+
         }
     }
 
     public function updatedSelectedColor($colorCode)
     {
+        // Store the color code
+        $this->selectedColorCode = $colorCode;
+
         // Find color attribute value based on selected color code
         $attributeValue = $this->product->productAttributes->where('type', 'color')->flatMap->productAttributeValues->firstWhere('colorcode', $colorCode);
 
@@ -101,95 +111,93 @@ class Product extends Component
         }
     }
 
-
     // Add product to the cart
     public function addToCart($productId)
-{
-    $product = ProductModel::findOrFail($productId);
-    $cart = session()->get('cart', []);
+    {
+        $product = ProductModel::findOrFail($productId);
+        $cart = session()->get('cart', []);
 
-    // Ensure valid color and size selection
-    if (!$this->selectedColor || !$this->selectedSize) {
-        session()->flash('error', 'Please select a valid color and size.');
-        return;
-    }
+        // Ensure valid color and size selection
+        if (!$this->selectedColor || !$this->selectedSize) {
+            session()->flash('error', 'Please select a valid color and size.');
+            return;
+        }
 
-    // Find SKU based on selected attributes dynamically
-    $skuQuery = ProductSKU::where('product_id', $product->id);
+        // Find SKU based on selected attributes dynamically
+        $skuQuery = ProductSKU::where('product_id', $product->id);
 
-    // Loop through the product's attributes to dynamically build the SKU query
-    foreach ($this->product->productAttributes as $attribute) {
-        $attributeType = $attribute->type;
-        $attributeId = $attribute->id;
-        $selectedValue = null;
+        // Loop through the product's attributes to dynamically build the SKU query
+        foreach ($this->product->productAttributes as $attribute) {
+            $attributeType = $attribute->type;
+            $attributeId = $attribute->id;
+            $selectedValue = null;
 
-        // Dynamically check for selected attributes
-        if ($attributeType == 'color') {
-            $selectedValue = $this->selectedColor;
-        } elseif ($attributeType == 'sizes') {
-            $selectedValue = $this->selectedSize;
+            // Dynamically check for selected attributes
+            if ($attributeType == 'color') {
+                $selectedValue = $this->selectedColor;
+            } elseif ($attributeType == 'sizes') {
+                $selectedValue = $this->selectedSize;
+            } else {
+                // For other attributes (like material, pattern), dynamically use the selected value
+                $selectedValue = $this->{"selected{$attributeType}"} ?? null;
+            }
+
+            if ($selectedValue) {
+                // Dynamically apply the JSON filtering based on attribute ID
+                $skuQuery->whereJsonContains("attributes->attribute{$attributeId}->value", $selectedValue);
+            }
+        }
+
+        // Fetch the matching SKU
+        $sku = $skuQuery->first();
+
+        if (!$sku) {
+            session()->flash('error', 'Selected combination is not available.');
+            return;
+        }
+
+        $skuId = $sku->id;
+        $skuImage = $sku->sku_image;
+        $price = $sku->price;
+
+        // Ensure unique cart key based on product ID and SKU ID
+        $cartKey = "product_{$product->id}_sku_{$skuId}";
+        // dd($cartKey);
+
+        // Add or update the cart item
+        if (!isset($cart[$cartKey])) {
+            $cart[$cartKey] = [
+                'id' => $product->id,
+                'sku_id' => $skuId,
+                'selected_color' => $this->selectedColor,
+                'selected_size' => $this->selectedSize,
+                'name' => $product->name,
+                'description' => $product->description,
+                'sku_image' => $skuImage,
+                'status' => $product->status,
+                'category_id' => $product->category_id,
+                'brand_id' => $product->brand_id,
+                'price' => $price,
+                'quantity' => $this->quantity,
+                'timestamp' => now()->timestamp,
+            ];
         } else {
-            // For other attributes (like material, pattern), dynamically use the selected value
-            $selectedValue = $this->{"selected{$attributeType}"} ?? null;
+            // If item already exists, update the quantity
+            $cart[$cartKey]['quantity'] += $this->quantity;
         }
 
-        if ($selectedValue) {
-            // Dynamically apply the JSON filtering based on attribute ID
-            $skuQuery->whereJsonContains("attributes->attribute{$attributeId}->value", $selectedValue);
-        }
+        // Save updated cart in session
+        session()->put('cart', $cart);
+        session()->save();
+
+        // Dispatch events to update UI
+        $this->dispatch('cartCountUpdated', count($cart));
+        $this->dispatch('cartUpdated');
+        $this->dispatch('showToast', [
+            'message' => 'Added to Cart!',
+            'type' => 'success'
+        ]);
     }
-
-    // Fetch the matching SKU
-    $sku = $skuQuery->first();
-
-    if (!$sku) {
-        session()->flash('error', 'Selected combination is not available.');
-        return;
-    }
-
-    $skuId = $sku->id;
-    $skuImage = $sku->sku_image;
-    $price = $sku->price;
-
-    // Ensure unique cart key based on product ID and SKU ID
-    $cartKey = "product_{$product->id}_sku_{$skuId}";
-    // dd($cartKey);
-
-    // Add or update the cart item
-    if (!isset($cart[$cartKey])) {
-        $cart[$cartKey] = [
-            'id' => $product->id,
-            'sku_id' => $skuId,
-            'selected_color' => $this->selectedColor,
-            'selected_size' => $this->selectedSize,
-            'name' => $product->name,
-            'description' => $product->description,
-            'sku_image' => $skuImage,
-            'status' => $product->status,
-            'category_id' => $product->category_id,
-            'brand_id' => $product->brand_id,
-            'price' => $price,
-            'quantity' => $this->quantity,
-            'timestamp' => now()->timestamp,
-        ];
-    } else {
-        // If item already exists, update the quantity
-        $cart[$cartKey]['quantity'] += $this->quantity;
-    }
-
-    // Save updated cart in session
-    session()->put('cart', $cart);
-    session()->save();
-
-    // Dispatch events to update UI
-    $this->dispatch('cartCountUpdated', count($cart));
-    $this->dispatch('cartUpdated');
-    $this->dispatch('showToast', [
-        'message' => 'Added to Cart!',
-        'type' => 'success'
-    ]);
-}
-
 
     // Increase product quantity
     public function increaseQuantity()
@@ -213,6 +221,7 @@ class Product extends Component
             'product' => $this->product,
             'price' => $this->price,
             'selectedColorImage' => $this->selectedColorImage,
+            'selectedColorCode' => $this->selectedColorCode, // Pass the selected color code to the view
         ]);
     }
 }

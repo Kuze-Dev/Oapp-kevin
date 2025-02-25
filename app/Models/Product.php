@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Cart;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\ProductSKU;
@@ -49,6 +50,11 @@ class Product extends Model
     public function skus(): HasMany
     {
         return $this->hasMany(ProductSKU::class);
+    }
+
+    public function Cart(): HasMany
+    {
+        return $this->hasMany(Cart::class);
     }
 
 // protected $casts = [

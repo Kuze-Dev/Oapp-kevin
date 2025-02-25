@@ -17,15 +17,17 @@ class Login extends Component
     ];
 
     public function login()
-    {
-        $this->validate();
+{
+    $this->validate();
 
-        if (Auth::attempt(['email' => $this->email, 'password' => $this->password])) {
-            return redirect()->route('dashboard'); // Adjust as per your route
-        }
-
-        $this->errorMessage = 'Invalid credentials. Please try again.';
+    if (Auth::attempt(['email' => $this->email, 'password' => $this->password])) {
+        session()->regenerate();
+        $this->dispatch('checkAuth'); // Add this line to notify the header
+        return redirect()->route('home');
     }
+
+    $this->errorMessage = 'Invalid credentials. Please try again.';
+}
 
     public function render()
     {
