@@ -28,6 +28,11 @@ class ProductSKU extends Model
         return $this->belongsTo(Product::class);
     }
 
+    public function Cart(): HasMany
+    {
+        return $this->hasMany(Cart::class);
+    }
+
     // public function productAttribute(): BelongsTo
     // {
     //     return $this->belongsTo(ProductAttribute::class);

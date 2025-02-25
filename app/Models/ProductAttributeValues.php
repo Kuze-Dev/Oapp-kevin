@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use App\Models\Cart;
 use App\Models\ProductAttribute;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ProductAttributeValues extends Model
@@ -20,6 +22,10 @@ class ProductAttributeValues extends Model
     public function productAttribute(): BelongsTo
     {
         return $this->belongsTo(ProductAttribute::class);
+    }
+
+    public function Cart(): HasMany {
+        return $this->hasMany(Cart::class);
     }
 
     // public function product(): BelongsTo

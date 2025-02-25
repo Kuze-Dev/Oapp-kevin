@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Cart;
 use App\Models\Product;
 use App\Models\ProductAttributeValues;
 use Illuminate\Database\Eloquent\Model;
@@ -16,7 +17,7 @@ class ProductAttribute extends Model
         'product_id',
     ];
 
-   
+
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
@@ -27,5 +28,9 @@ class ProductAttribute extends Model
         return $this->hasMany(ProductAttributeValues::class);
     }
 
+    public function Cart(): HasMany
+    {
+        return $this->hasMany(Cart::class);
+    }
 }
 

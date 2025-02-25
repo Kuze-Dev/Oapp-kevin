@@ -33,13 +33,15 @@
                         <div class="space-y-2">
                             <h3 class="font-semibold text-gray-800 text-lg">Color:</h3>
                             <div class="flex flex-wrap space-x-4">
-                                @foreach ($attribute->productAttributeValues as $value)
-                                    <button wire:click="$set('selectedColor', '{{ $value->colorcode }}')"
-                                        class="w-10 h-10 rounded-full focus:outline-none transform transition-all hover:scale-125 ring-2 ring-indigo-600
-                                        {{ $selectedColor === $value->colorcode ? 'border-4 border-indigo-600 ring-4 ring-indigo-600' : '' }}"
-                                        style="background-color: {{ $value->colorcode }}">
-                                    </button>
-                                @endforeach
+                            @foreach ($attribute->productAttributeValues as $value)
+    <button wire:click="$set('selectedColor', '{{ $value->colorcode }}')"
+        class="w-10 h-10 rounded-full focus:outline-none transform transition-all hover:scale-110
+        ring-2 ring-indigo-600
+        {{ $selectedColorCode === $value->colorcode ? 'border-2 border-indigo-600 scale-105' : 'border border-gray-300' }}"
+        style="background-color: {{ $value->colorcode }}">
+    </button>
+@endforeach
+
                             </div>
                         </div>
                     @elseif ($attribute->type === 'sizes')
