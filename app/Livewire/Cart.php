@@ -22,99 +22,98 @@ class Cart extends Component
         $this->loadCart();
     }
 
-    public function loadCart()
-    {
-        if (Auth::check()) {
-            // Initialize an empty array for cart data
-            $cartData = [];
+   public function loadCart()
+{
+    if (Auth::check()) {
+        // Initialize an empty array for cart data
+        $cartData = [];
 
-            // Load cart from database for authenticated users
-            $cartItems = CartModel::where('user_id', Auth::id())->get();
+        // Load cart from database for authenticated users
+        $cartItems = CartModel::where('user_id', Auth::id())->get();
 
-            foreach ($cartItems as $cartItem) {
-                $sku = ProductSKU::find($cartItem->sku_id);
+        foreach ($cartItems as $cartItem) {
+            $sku = ProductSKU::find($cartItem->sku_id);
 
-                if (!$sku) continue;
+            if (!$sku) continue;
 
-                // Parse the SKU attributes to get color and size
-                $skuAttributes = json_decode($sku->attributes, true);
-                $color = null;
-                $size = null;
+            // Parse the SKU attributes to get color and size
+            $skuAttributes = json_decode($sku->attributes, true);
+            $color = null;
+            $size = null;
 
-                // Extract color and size from SKU attributes
-                if (isset($skuAttributes['attribute1']) && isset($skuAttributes['attribute1']['value'])) {
-                    $color = $skuAttributes['attribute1']['value'];
-                }
-
-                if (isset($skuAttributes['attribute2']) && isset($skuAttributes['attribute2']['value'])) {
-                    $size = $skuAttributes['attribute2']['value'];
-                }
-
-                $cartData[] = [
-                    'id' => $cartItem->product_id,
-                    'sku_id' => $cartItem->sku_id,
-                    'quantity' => $cartItem->quantity,
-                    'price' => $sku->price,
-                    'sku_image' => $sku->sku_image,
-                    'selected_color' => $color,
-                    'selected_size' => $size,
-                    'timestamp' => $cartItem->created_at->timestamp,
-                ];
+            // Extract color and size from SKU attributes
+            if (isset($skuAttributes['attribute1']) && isset($skuAttributes['attribute1']['value'])) {
+                $color = $skuAttributes['attribute1']['value'];
             }
-        } else {
-            // Load cart from session for guest users
-            $cartData = session()->get('cart', []);
 
-            // For session-based cart, we also need to parse SKU attributes for each item
-            foreach ($cartData as $key => $item) {
-                if (isset($item['sku_id'])) {
-                    $sku = ProductSKU::find($item['sku_id']);
-                    if ($sku) {
-                        $skuAttributes = json_decode($sku->attributes, true);
+            if (isset($skuAttributes['attribute2']) && isset($skuAttributes['attribute2']['value'])) {
+                $size = $skuAttributes['attribute2']['value'];
+            }
 
-                        // Extract color and size from SKU attributes
-                        if (isset($skuAttributes['attribute1']) && isset($skuAttributes['attribute1']['value'])) {
-                            $cartData[$key]['selected_color'] = $skuAttributes['attribute1']['value'];
-                        }
+            $cartData[] = [
+                'id' => $cartItem->product_id,
+                'sku_id' => $cartItem->sku_id,
+                'quantity' => $cartItem->quantity,
+                'price' => $sku->price,
+                'sku_image' => $sku->sku_image,
+                'selected_color' => $color,
+                'selected_size' => $size,
+                'timestamp' => $cartItem->created_at->timestamp,
+            ];
+        }
+    } else {
+        // Load cart from session for guest users
+        $cartData = session()->get('cart', []);
 
-                        if (isset($skuAttributes['attribute2']) && isset($skuAttributes['attribute2']['value'])) {
-                            $cartData[$key]['selected_size'] = $skuAttributes['attribute2']['value'];
-                        }
+        // For session-based cart, we also need to parse SKU attributes for each item
+        foreach ($cartData as $key => $item) {
+            if (isset($item['sku_id'])) {
+                $sku = ProductSKU::find($item['sku_id']);
+                if ($sku) {
+                    $skuAttributes = json_decode($sku->attributes, true);
+
+                    // Extract color and size from SKU attributes
+                    if (isset($skuAttributes['attribute1']) && isset($skuAttributes['attribute1']['value'])) {
+                        $cartData[$key]['selected_color'] = $skuAttributes['attribute1']['value'];
+                    }
+
+                    if (isset($skuAttributes['attribute2']) && isset($skuAttributes['attribute2']['value'])) {
+                        $cartData[$key]['selected_size'] = $skuAttributes['attribute2']['value'];
                     }
                 }
             }
         }
-
-        $productIds = collect($cartData)->pluck('id')->unique()->toArray();
-        $products = Product::whereIn('id', $productIds)->with('brand')->get();
-
-        $this->cart = collect($cartData)->map(function ($item, $cartKey) use ($products) {
-            $product = $products->where('id', $item['id'])->first();
-
-            if (!$product) return null;
-
-            return (object) [
-                'cart_key' => $cartKey,
-                'id' => $product->id,
-                'sku_id' => $item['sku_id'] ?? 'N/A',
-                'name' => $product->name,
-                'description' => $item['description'] ?? $product->description,
-                'sku_image' => $item['sku_image'] ?? $product->product_image,
-                'status' => $product->status,
-                'category_id' => $product->category_id,
-                'brand' => $product->brand,
-                'price' => $item['price'] ?? $product->price,
-                'quantity' => $item['quantity'] ?? 1,
-                'selected_color' => $item['selected_color'] ?? null,
-                'selected_size' => $item['selected_size'] ?? null,
-                'timestamp' => $item['timestamp'] ?? now()->timestamp,
-            ];
-        })->filter();
-
-        $this->cart = $this->cart->sortByDesc('timestamp')->values();
-        $this->updatedSelectedItems();
     }
 
+    $productIds = collect($cartData)->pluck('id')->unique()->toArray();
+    $products = Product::whereIn('id', $productIds)->with('brand')->get();
+
+    $this->cart = collect($cartData)->map(function ($item, $cartKey) use ($products) {
+        $product = $products->where('id', $item['id'])->first();
+
+        if (!$product) return null;
+
+        return (object) [
+            'cart_key' => $cartKey,
+            'id' => $product->id,
+            'sku_id' => $item['sku_id'] ?? 'N/A',
+            'name' => $product->name,
+            'description' => $item['description'] ?? $product->description,
+            'sku_image' => $item['sku_image'] ?? $product->product_image,
+            'status' => $product->status,
+            'category_id' => $product->category_id,
+            'brand' => $product->brand,
+            'price' => $item['price'] ?? $product->price,
+            'quantity' => $item['quantity'] ?? 1,
+            'selected_color' => $item['selected_color'] ?? null,
+            'selected_size' => $item['selected_size'] ?? null,
+            'timestamp' => $item['timestamp'] ?? now()->timestamp,
+        ];
+    })->filter();
+
+    $this->cart = $this->cart->sortByDesc('timestamp')->values();
+    $this->updatedSelectedItems();
+}
     public function removeFromCart($cartKey)
     {
         if (Auth::check()) {
@@ -196,22 +195,27 @@ class Cart extends Component
     }
 
     public function proceedToCheckout()
-    {
-        if (empty($this->selectedItems)) {
-            $this->dispatch('showToast', [
-                'message' => 'Please select at least one item to proceed.',
-                'type' => 'error',
-            ]);
-            return;
-        }
-
-        $selectedCartItems = collect($this->cart)->filter(fn($item) => in_array($item->cart_key, $this->selectedItems));
-
-        session()->put('checkout_cart', $selectedCartItems);
-        session()->save();
-
-        return redirect()->route('checkout');
+{
+    if (!Auth::check()) {
+        return redirect()->route('register')->with('message', 'Please register or login to proceed to checkout.');
     }
+
+    if (empty($this->selectedItems)) {
+        $this->dispatch('showToast', [
+            'message' => 'Please select at least one item to proceed.',
+            'type' => 'error',
+        ]);
+        return;
+    }
+
+    $selectedCartItems = collect($this->cart)->filter(fn($item) => in_array($item->cart_key, $this->selectedItems));
+
+    session()->put('checkout_cart', $selectedCartItems);
+    session()->save();
+
+    return redirect()->route('checkout');
+}
+
 
     public function increaseQuantity($cartKey)
     {

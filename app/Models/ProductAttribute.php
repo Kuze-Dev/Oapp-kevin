@@ -28,9 +28,6 @@ class ProductAttribute extends Model
         return $this->hasMany(ProductAttributeValues::class);
     }
 
-    public function Cart(): HasMany
-    {
-        return $this->hasMany(Cart::class);
-    }
+  
 }
 

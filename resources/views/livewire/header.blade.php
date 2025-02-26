@@ -51,7 +51,7 @@
             </button>
         </a>
     @else
-        <div class="relative" x-data="{ open: false }">
+        <div class="relative " x-data="{ open: false }">
             <button @click="open = !open" class="flex items-center px-4 py-2 text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg transition">
                 <svg class="h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
                     <path fill-rule="evenodd" d="M15.75 7.5a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM3 18a7.5 7.5 0 0115 0v.75a.75.75 0 01-.75.75h-13.5a.75.75 0 01-.75-.75V18z" clip-rule="evenodd" />
@@ -62,7 +62,10 @@
                 </svg>
             </button>
 
-            <div x-show="open" @click.away="open = false" class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg z-10">
+            <div x-show="open" @click.away="open = false"
+            class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg z-10 hidden"
+            :class="{ 'hidden': !open }"
+            x-transition>
                 <a href="/account" wire:navigate="account" class="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-indigo-100 dark:hover:bg-gray-700">My Account</a>
                 <a href="/orders" wire:navigate="orders" class="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-indigo-100 dark:hover:bg-gray-700">My Orders</a>
                 <button wire:click="logout" class="block w-full text-left px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-indigo-100 dark:hover:bg-gray-700">Logout</button>

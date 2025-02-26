@@ -24,9 +24,7 @@ class ProductAttributeValues extends Model
         return $this->belongsTo(ProductAttribute::class);
     }
 
-    public function Cart(): HasMany {
-        return $this->hasMany(Cart::class);
-    }
+
 
     // public function product(): BelongsTo
     // {
