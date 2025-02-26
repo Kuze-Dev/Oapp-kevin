@@ -16,10 +16,9 @@ class Cart extends Model
     protected $fillable = [
         'user_id',
         'product_id',
-        'product_attribute_id',
-        'product_attribute_value_id',
         'sku_id',
         'quantity',
+        'price',
     ];
 
 public function user(): BelongsTo
@@ -33,17 +32,6 @@ public function product(): BelongsTo
 
 }
 
-public function productAttribute(): BelongsTo
-{
-    return $this->belongsTo(ProductAttribute::class);
-
-}
-
-public function productAttributeValues(): BelongsTo
-{
-    return $this->belongsTo(ProductAttributeValues::class);
-
-}
 
 public function productSKU(): BelongsTo
 {

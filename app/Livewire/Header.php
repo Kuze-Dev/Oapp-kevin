@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Models\Cart;
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
 
@@ -18,8 +19,15 @@ class Header extends Component
 
     public function mount()
     {
-        $this->cartCount = count(session()->get('cart', []));
-        $this->checkAuth();
+        $this->checkAuth(); // Check authentication first
+
+        if ($this->isLoggedIn) {
+            // Get cart count from the database for authenticated users
+            $this->cartCount = Cart::where('user_id', Auth::id())->count();
+        } else {
+            // Get cart count from session for guest users
+            $this->cartCount = count(session()->get('cart', []));
+        }
     }
 
     public function checkAuth()
@@ -30,16 +38,19 @@ class Header extends Component
         }
     }
 
-    public function updateCartCount($count)
+    public function updateCartCount()
     {
-        $this->cartCount = $count;
+        if ($this->isLoggedIn) {
+            $this->cartCount = \App\Models\Cart::where('user_id', Auth::id())->count();
+        } else {
+            $this->cartCount = count(session()->get('cart', []));
+        }
     }
 
     public function logout()
     {
         Auth::logout();
-        session()->invalidate();
-        session()->regenerateToken();
+
         $this->checkAuth();
         return redirect()->route('home');
     }
