@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Product;
+use App\Models\OrderItem;
 use App\Models\ProductAttribute;
 use App\Models\ProductAttributeValues;
 use Illuminate\Database\Eloquent\Model;
@@ -32,6 +33,13 @@ class ProductSKU extends Model
     {
         return $this->hasMany(Cart::class);
     }
+
+    public function OrderItem(): HasMany
+    {
+        return $this->hasMany(OrderItem::class);
+    }
+
+   
 
     // public function productAttribute(): BelongsTo
     // {

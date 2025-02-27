@@ -2,20 +2,79 @@
 namespace App\Http\Controllers;
 
 use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\Payment;
 use Stripe\StripeClient;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Session;
 
 class PaymentController extends Controller
 {
-    public function payment($id , string $gateway)
-    {      
-        $order = Order::findOrFail($id);
+    public function processCheckout(Request $request)
+    {
+        // Get checkout data from session
+        $checkoutData = session('checkout_data');
+
+        if (!$checkoutData) {
+            return redirect()->route('checkout')->with('error', 'No checkout data found');
+        }
+
+        // Create order from checkout data
+        $order = Order::create([
+            'quantity' => $checkoutData['items']->sum('quantity'),
+            'amount' => $checkoutData['total'],
+            'is_paid' => false,
+            'shipping_method' => $checkoutData['shipping_method'],
+            'shipping_fee' => $checkoutData['shipping_fee'],
+            'status' => 'pending',
+            'user_id' => Auth::id() ?? 1, // Guest user ID if not logged in
+            'address' => $checkoutData['billing']['address'],
+            'city' => $checkoutData['billing']['city'],
+            'state' => $checkoutData['billing']['state'],
+            'zip_code' => $checkoutData['billing']['zip_code'],
+            'country' => $checkoutData['billing']['country'],
+            'phone' => $checkoutData['billing']['phone'],
+            'notes' => $checkoutData['billing']['notes'] ?? null,
+        ]);
+
+        // Create order items
+        foreach ($checkoutData['items'] as $item) {
+            OrderItem::create([
+                'order_id' => $order->id,
+                'product_sku_id' => $item->id, // Use product ID if SKU not available
+                'user_id' => Auth::id() ?? 1, // Guest user ID if not logged in
+                'quantity' => $item->quantity,
+                'price' => $item->price,
+                'subtotal' => $item->price * $item->quantity,
+            ]);
+        }
+
+        // Determine payment gateway
+        $paymentMethod = $checkoutData['payment_method'];
+        $gateway = '';
+
+        if ($paymentMethod === 'credit_card') {
+            $gateway = 'stripe';
+        } elseif (in_array($paymentMethod, ['gcash', 'paymaya'])) {
+            $gateway = 'paymongo';
+        } else {
+            // For cash on delivery, mark as pending and redirect to success
+            return redirect()->route('checkout.success');
+        }
+
+        // Redirect to payment gateway
+        return redirect()->route('payment', ['id' => $order->id, 'gateway' => $gateway]);
+    }
+
+    public function payment($id, string $gateway)
+    {
+        $order = Order::with('orderItems')->findOrFail($id);
 
         abort_if(
-            ! in_array($gateway, ['stripe', 'paymongo']) || $order->is_paid,
+            !in_array($gateway, ['stripe', 'paymongo']) || $order->is_paid,
             400,
             'Payment Gateway Not Supported or Order is paid'
         );
@@ -28,27 +87,63 @@ class PaymentController extends Controller
         $stripe = new StripeClient(env('STRIPE_SECRET_KEY'));
         $referenceNumber = Str::random(10);
 
-        $lineItems = [[
-            'price_data' => [
-                'currency' => 'php',
-                'product_data' => [
-                    'name' => $order->order_name,
-                    'description' => $order->order_description,
+        // Format line items for Stripe
+        $lineItems = [];
+
+        if ($order->orderItems->count() > 0) {
+            foreach ($order->orderItems as $item) {
+                $lineItems[] = [
+                    'price_data' => [
+                        'currency' => 'php',
+                        'product_data' => [
+                            'name' => "Order #{$order->id} - Item #{$item->id}",
+                            'description' => "Product ID: {$item->product_sku_id}",
+                        ],
+                        'unit_amount' => $item->price * 100, // Convert to cents
+                    ],
+                    'quantity' => $item->quantity,
+                ];
+            }
+        } else {
+            // Fallback if no order items found
+            $lineItems[] = [
+                'price_data' => [
+                    'currency' => 'php',
+                    'product_data' => [
+                        'name' => "Order #{$order->id}",
+                        'description' => "Complete order payment",
+                    ],
+                    'unit_amount' => $order->amount * 100, // Convert to cents
                 ],
-                'unit_amount' => $order->amount * 100,
-            ],
-            'quantity' => $order->quantity,
-        ]];
+                'quantity' => 1,
+            ];
+        }
+
+        // Add shipping fee as separate line item
+        if ($order->shipping_fee > 0) {
+            $lineItems[] = [
+                'price_data' => [
+                    'currency' => 'php',
+                    'product_data' => [
+                        'name' => "Shipping Fee ({$order->shipping_method})",
+                        'description' => "Shipping cost",
+                    ],
+                    'unit_amount' => $order->shipping_fee * 100, // Convert to cents
+                ],
+                'quantity' => 1,
+            ];
+        }
 
         $checkout_session = $stripe->checkout->sessions->create([
             'line_items' => $lineItems,
             'mode' => 'payment',
             'success_url' => route('payment.success', ['id' => $order->id, 'gateway' => $gateway]),
             'cancel_url' => route('payment.cancel', ['gateway' => $gateway]),
-            'customer_email' => 'reynaldomahumot8@gmail.com',
-            'metadata' => [ 
-                'customer_name' => 'Reynaldo Mahumot',
+            'customer_email' => Session::get('checkout_data.billing.email', Auth::user()->email ?? ''),
+            'metadata' => [
+                'customer_name' => Session::get('checkout_data.billing.name', Auth::user()->name ?? ''),
                 'reference_number' => $referenceNumber,
+                'order_id' => $order->id
             ],
         ]);
 
@@ -59,25 +154,53 @@ class PaymentController extends Controller
 
     private function payWithPaymongo($order, $gateway)
     {
-        $lineItems = [
-            [
+        // Format line items for PayMongo
+        $lineItems = [];
+
+        if ($order->orderItems->count() > 0) {
+            foreach ($order->orderItems as $item) {
+                $lineItems[] = [
+                    "currency" => "PHP",
+                    "amount" => $item->price * 100, // Convert to cents
+                    "description" => "Product ID: {$item->product_sku_id}",
+                    "name" => "Order #{$order->id} - Item #{$item->id}",
+                    "quantity" => $item->quantity
+                ];
+            }
+        } else {
+            // Fallback if no order items found
+            $lineItems[] = [
                 "currency" => "PHP",
-                "amount" => $order->amount * 100,
-                "description" => $order->order_description,
-                "name" => $order->order_name,
-                "quantity" => $order->quantity
-            ],
-        ];
+                "amount" => $order->amount * 100, // Convert to cents
+                "description" => "Complete order payment",
+                "name" => "Order #{$order->id}",
+                "quantity" => 1
+            ];
+        }
+
+        // Add shipping fee as separate line item
+        if ($order->shipping_fee > 0) {
+            $lineItems[] = [
+                "currency" => "PHP",
+                "amount" => $order->shipping_fee * 100, // Convert to cents
+                "description" => "Shipping cost",
+                "name" => "Shipping Fee ({$order->shipping_method})",
+                "quantity" => 1
+            ];
+        }
+
         $referenceNumber = Str::random(10);
+        $billingDetails = Session::get('checkout_data.billing', []);
+
         $data = [
             "data" => [
                 "attributes" => [
                     "billing" => [
-                        "name" => 'Reynaldo Mahumot',
-                        "email" => 'reynaldomahumot8@gmail.com',
-                        "phone" => '9060816596'
+                        "name" => $billingDetails['name'] ?? Auth::user()->name ?? 'Customer',
+                        "email" => $billingDetails['email'] ?? Auth::user()->email ?? 'customer@example.com',
+                        "phone" => $billingDetails['phone'] ?? '9000000000'
                     ],
-                    "send_email_receipt" => false,
+                    "send_email_receipt" => true,
                     "show_description" => true,
                     "show_line_items" => true,
                     "line_items" => $lineItems,
@@ -85,19 +208,19 @@ class PaymentController extends Controller
                     "success_url" => route('payment.success', ['id' => $order->id, 'gateway' => $gateway]),
                     "cancel_url" => route('payment.cancel', ['gateway' => $gateway]),
                     "reference_number" => $referenceNumber,
-                    "description" => "testing"
+                    "description" => "Payment for Order #{$order->id}"
                 ]
             ]
         ];
 
-        $apiKey = base64_encode(env('PAYMONGO_SECRET_KEY'));  
+        $apiKey = base64_encode(env('PAYMONGO_SECRET_KEY'));
 
         $response = Http::withHeaders([
             'Content-Type' => 'application/json',
             'Accept' => 'application/json',
             'Authorization' => 'Basic ' . $apiKey,
         ])->post('https://api.paymongo.com/v1/checkout_sessions', $data);
-        
+
         if ($response->successful()) {
             $checkoutUrl = $response->json()['data']['attributes']['checkout_url'];
             $sessionId = $response->json()['data']['id'];
@@ -106,9 +229,9 @@ class PaymentController extends Controller
 
             return redirect($checkoutUrl);
         } else {
-            $errorMessage = $response->json()['errors'];
+            $errorMessage = $response->json()['errors'] ?? 'Payment error occurred';
 
-            return redirect()->back()->with('error', $errorMessage);
+            return redirect()->route('checkout')->with('error', $errorMessage);
         }
     }
 
@@ -116,9 +239,15 @@ class PaymentController extends Controller
     {
         $orderId = $request->query('id');
         $gateway = $request->query('gateway');
-    
+
         $order = Order::findOrFail($orderId);
-        $order->update(['is_paid' => true]);
+        $order->update([
+            'is_paid' => true,
+            'status' => 'processing'
+        ]);
+
+        $billingDetails = Session::get('checkout_data.billing', []);
+        $userId = Auth::id();
 
         if ($gateway === 'paymongo') {
             $sessionId = session('paymongo_sessionId');
@@ -134,17 +263,24 @@ class PaymentController extends Controller
             if ($response->successful()) {
                 session()->forget('paymongo_sessionId');
 
-                $billingDetails = $response->json()['data']['attributes']['billing'];
-                $referenceNumber = $response->json()['data']['attributes']['reference_number'];
-                $lineItems = $response->json()['data']['attributes']['line_items'];
+                $responseData = $response->json()['data']['attributes'];
+                $billingDetails = $responseData['billing'] ?? $billingDetails;
+                $referenceNumber = $responseData['reference_number'];
+
+                // Calculate total amount from line items
+                $totalAmount = 0;
+                foreach ($responseData['line_items'] as $item) {
+                    $totalAmount += ($item['amount'] * $item['quantity']) / 100; // Convert back from cents
+                }
 
                 Payment::create([
                     'order_id' => $orderId,
+                    'user_id' => $userId,
                     'gateway' => $gateway,
-                    'amount' => $lineItems[0]['amount'] * $lineItems[0]['quantity'] / 100,                
-                    'name' => $billingDetails['name'],
-                    'email' => $billingDetails['email'],
-                    'phone' => $billingDetails['phone'],
+                    'amount' => $totalAmount ?? $order->amount,
+                    'name' => $billingDetails['name'] ?? 'Customer',
+                    'email' => $billingDetails['email'] ?? 'customer@example.com',
+                    'phone' => $billingDetails['phone'] ?? '9000000000',
                     'reference_number' => $referenceNumber,
                 ]);
             }
@@ -152,27 +288,41 @@ class PaymentController extends Controller
         } elseif ($gateway === 'stripe') {
             $sessionId = session('stripe_checkout_id');
             $stripe = new StripeClient(env('STRIPE_SECRET_KEY'));
-    
-            $response = $stripe->checkout->sessions->retrieve($sessionId);
 
-            $responseData = $response->toArray(); 
+            $response = $stripe->checkout->sessions->retrieve($sessionId);
+            $responseData = $response->toArray();
 
             session()->forget('stripe_checkout_id');
 
             Payment::create([
                 'order_id' => $orderId,
+                'user_id' => $userId,
                 'gateway' => $gateway,
-                'amount' => $responseData['amount_total'] / 100,
-                'name' => $responseData['customer_details']['name'],
-                'email' => $responseData['customer_email'],
-                'phone' => $responseData['customer_details']['phone'] ?? '',
+                'amount' => $responseData['amount_total'] / 100, // Convert back from cents
+                'name' => $responseData['customer_details']['name'] ?? $billingDetails['name'] ?? 'Customer',
+                'email' => $responseData['customer_email'] ?? $billingDetails['email'] ?? 'customer@example.com',
+                'phone' => $responseData['customer_details']['phone'] ?? $billingDetails['phone'] ?? '9000000000',
                 'reference_number' => $responseData['metadata']['reference_number'],
             ]);
-    
         } else {
-            return redirect()->route('orders')->withError('Payment Gateway Not Supported');
+            // For cash on delivery or other methods
+            Payment::create([
+                'order_id' => $orderId,
+                'user_id' => $userId,
+                'gateway' => 'cash_on_delivery',
+                'amount' => $order->amount,
+                'name' => $billingDetails['name'] ?? 'Customer',
+                'email' => $billingDetails['email'] ?? 'customer@example.com',
+                'phone' => $billingDetails['phone'] ?? '9000000000',
+                'reference_number' => Str::random(10),
+            ]);
         }
-        return redirect()->route('orders');
+
+        // Clear checkout session
+        session()->forget('checkout_data');
+        session()->forget('checkout_cart');
+
+        return redirect()->route('home')->with('success', 'Order placed successfully!');
     }
 
     public function paymentCancel(Request $request)
@@ -197,13 +347,11 @@ class PaymentController extends Controller
         } elseif ($gateway === 'stripe') {
             $sessionId = session('stripe_checkout_id');
             $stripe = new StripeClient(env('STRIPE_SECRET_KEY'));
-    
-            $response = $stripe->checkout->sessions->expire($sessionId);
 
-            $responseData = $response->toArray(); 
-        } else {
-            return redirect()->route('home');
+            $stripe->checkout->sessions->expire($sessionId);
+            session()->forget('stripe_checkout_id');
         }
-        return redirect()->route('home');
+
+        return redirect()->route('checkout')->with('error', 'Payment was cancelled');
     }
 }
