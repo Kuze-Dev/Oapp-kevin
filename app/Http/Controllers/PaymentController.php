@@ -44,7 +44,7 @@ class PaymentController extends Controller
         foreach ($checkoutData['items'] as $item) {
             OrderItem::create([
                 'order_id' => $order->id,
-                'product_sku_id' => $item->id, // Use product ID if SKU not available
+                'product_sku_id' => $item->sku_id ?? $item->id, // Use the specific SKU ID if available
                 'user_id' => Auth::id() ?? 1, // Guest user ID if not logged in
                 'quantity' => $item->quantity,
                 'price' => $item->price,
@@ -60,11 +60,13 @@ class PaymentController extends Controller
             $gateway = 'stripe';
         } elseif (in_array($paymentMethod, ['gcash', 'paymaya'])) {
             $gateway = 'paymongo';
-        } else {
+        } elseif ($paymentMethod === 'cash_on_delivery') {
             // For cash on delivery, mark as pending and redirect to success
-            return redirect()->route('checkout.success');
+            return redirect()->route('payment.success', ['id' => $order->id, 'gateway' => 'cash_on_delivery']);
+        } else {
+            // Fallback for unknown payment methods
+            return redirect()->route('checkout')->with('error', 'Invalid payment method selected');
         }
-
         // Redirect to payment gateway
         return redirect()->route('payment', ['id' => $order->id, 'gateway' => $gateway]);
     }

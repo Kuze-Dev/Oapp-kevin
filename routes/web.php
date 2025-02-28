@@ -28,9 +28,9 @@ Route::middleware(['auth'])->group(function () {
     // Checkout process
     Route::get('/checkout', CheckOut::class)->name('checkout');
     Route::post('/process-checkout', [PaymentController::class, 'processCheckout'])->name('checkout.process');
-    Route::get('/checkout/success', function() {
-        return view('checkout.success');
-    })->name('checkout.success');
+    // Route::get('/checkout/success', function() {
+    //     return view('checkout.success');
+    // })->name('checkout.success');
 
     // Redirect /orders to /home
     Route::get('/home', function () {

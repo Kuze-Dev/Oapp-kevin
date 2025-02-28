@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Models\Cart;
 use App\Models\Product;
 use Livewire\Component;
+use App\Models\ProductSKU;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use App\Http\Controllers\PaymentController;
@@ -42,34 +43,35 @@ class CheckOut extends Component
     }
 
     public function loadCart()
-    {
-        $checkoutCart = session()->get('checkout_cart', []);
+{
+    $checkoutCart = session()->get('checkout_cart', []);
 
-        if (empty($checkoutCart)) {
-            $this->cart = collect([]);
-            return;
-        }
-
-        $this->cart = collect($checkoutCart)->map(function ($item, $cartKey) {
-            // Ensure the item is an array and not an object
-            if (!is_array($item)) {
-                $item = (array) $item;
-            }
-
-            $product = Product::find($item['id'] ?? null);
-            return $product ? (object) [
-                'cart_key' => $cartKey,
-                'id' => $product->id,
-                'name' => $product->name,
-                'description' => $product->description,
-                'image' => $item['sku_image'] ?? $product->product_image,
-                'price' => $item['price'] ?? $product->price,
-                'quantity' => $item['quantity'] ?? 1,
-                'selected_color' => $item['selected_color'] ?? null,
-                'selected_size' => $item['selected_size'] ?? null,
-            ] : null;
-        })->filter()->values();
+    if (empty($checkoutCart)) {
+        $this->cart = collect([]);
+        return;
     }
+
+    $this->cart = collect($checkoutCart)->map(function ($item, $cartKey) {
+        // Ensure we preserve the SKU ID from the cart item
+        $skuId = $item->sku_id ?? ($item['sku_id'] ?? null);
+
+        // Get product details
+        $product = Product::find($item->id ?? $item['id'] ?? null);
+
+        return $product ? (object) [
+            'cart_key' => $cartKey,
+            'id' => $product->id,
+            'sku_id' => $skuId, // Keep the original SKU ID
+            'name' => $product->name,
+            'description' => $product->description,
+            'image' => $item->sku_image ?? $item['sku_image'] ?? $product->product_image,
+            'price' => $item->price ?? $item['price'] ?? $product->price,
+            'quantity' => $item->quantity ?? $item['quantity'] ?? 1,
+            'selected_color' => $item->selected_color ?? $item['selected_color'] ?? null,
+            'selected_size' => $item->selected_size ?? $item['selected_size'] ?? null,
+        ] : null;
+    })->filter()->values();
+}
 
     public function removeFromCheckOut($cartKey)
     {
