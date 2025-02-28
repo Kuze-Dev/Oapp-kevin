@@ -58,17 +58,18 @@ class CheckOut extends Component
         // Get product details
         $product = Product::find($item->id ?? $item['id'] ?? null);
 
+
         return $product ? (object) [
             'cart_key' => $cartKey,
             'id' => $product->id,
             'sku_id' => $skuId, // Keep the original SKU ID
             'name' => $product->name,
             'description' => $product->description,
-            'image' => $item->sku_image ?? $item['sku_image'] ?? $product->product_image,
-            'price' => $item->price ?? $item['price'] ?? $product->price,
-            'quantity' => $item->quantity ?? $item['quantity'] ?? 1,
-            'selected_color' => $item->selected_color ?? $item['selected_color'] ?? null,
-            'selected_size' => $item->selected_size ?? $item['selected_size'] ?? null,
+            'image' => $item->sku_image ?? $product->product_image,
+            'price' => $item->price ??  $product->price,
+            'quantity' => $item->quantity ?? 1,
+            'selected_color' => $item->selected_color ?? null,
+            'selected_size' => $item->selected_size ??  null,
         ] : null;
     })->filter()->values();
 }
