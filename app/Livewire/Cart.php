@@ -195,26 +195,29 @@ class Cart extends Component
     }
 
     public function proceedToCheckout()
-{
-    if (!Auth::check()) {
-        return redirect()->route('register')->with('message', 'Please register or login to proceed to checkout.');
+    {
+        if (empty($this->selectedItems)) {
+            $this->dispatch('showToast', [
+                'message' => 'Please select at least one item to proceed.',
+                'type' => 'error',
+            ]);
+            return;
+        }
+
+        if (!Auth::check()) {
+            return redirect()->route('register')->with('message', 'Please register or login to proceed to checkout.');
+        }
+
+        $selectedCartItems = collect($this->cart)->filter(fn($item) => in_array($item->cart_key, $this->selectedItems));
+
+
+
+        session()->put('checkout_cart', $selectedCartItems);
+        session()->save();
+
+        return redirect()->route('checkout');
     }
 
-    if (empty($this->selectedItems)) {
-        $this->dispatch('showToast', [
-            'message' => 'Please select at least one item to proceed.',
-            'type' => 'error',
-        ]);
-        return;
-    }
-
-    $selectedCartItems = collect($this->cart)->filter(fn($item) => in_array($item->cart_key, $this->selectedItems));
-
-    session()->put('checkout_cart', $selectedCartItems);
-    session()->save();
-
-    return redirect()->route('checkout');
-}
 
 
     public function increaseQuantity($cartKey)

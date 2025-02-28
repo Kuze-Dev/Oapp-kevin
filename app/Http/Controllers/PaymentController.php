@@ -1,10 +1,11 @@
 <?php
 namespace App\Http\Controllers;
 
+use App\Models\Cart;
 use App\Models\Order;
-use App\Models\OrderItem;
 use App\Models\Payment;
 use Stripe\StripeClient;
+use App\Models\OrderItem;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -44,7 +45,7 @@ class PaymentController extends Controller
         foreach ($checkoutData['items'] as $item) {
             OrderItem::create([
                 'order_id' => $order->id,
-                'product_sku_id' => $item->id, // Use product ID if SKU not available
+                'product_sku_id' => $item->sku_id ?? $item->id, // Use the specific SKU ID if available
                 'user_id' => Auth::id() ?? 1, // Guest user ID if not logged in
                 'quantity' => $item->quantity,
                 'price' => $item->price,
@@ -60,11 +61,13 @@ class PaymentController extends Controller
             $gateway = 'stripe';
         } elseif (in_array($paymentMethod, ['gcash', 'paymaya'])) {
             $gateway = 'paymongo';
-        } else {
+        } elseif ($paymentMethod === 'cash_on_delivery') {
             // For cash on delivery, mark as pending and redirect to success
-            return redirect()->route('checkout.success');
+            return redirect()->route('payment.success', ['id' => $order->id, 'gateway' => 'cash_on_delivery']);
+        } else {
+            // Fallback for unknown payment methods
+            return redirect()->route('checkout')->with('error', 'Invalid payment method selected');
         }
-
         // Redirect to payment gateway
         return redirect()->route('payment', ['id' => $order->id, 'gateway' => $gateway]);
     }
@@ -318,9 +321,23 @@ class PaymentController extends Controller
             ]);
         }
 
-        // Clear checkout session
-        session()->forget('checkout_data');
-        session()->forget('checkout_cart');
+      // Clear checkout session
+    session()->forget('checkout_data');
+    session()->forget('checkout_cart');
+
+    // Clear cart data for authenticated users
+    if (Auth::check()) {
+        // Get the product IDs that were in the order
+        $orderItemSkuIds = $order->orderItems->pluck('product_sku_id')->toArray();
+
+        // Delete cart items with those product SKU IDs
+        Cart::where('user_id', Auth::id())
+            ->whereIn('sku_id', $orderItemSkuIds)
+            ->delete();
+    } else {
+        // For guests, clear the entire cart session
+        session()->forget('cart');
+    }
 
         return redirect()->route('home')->with('success', 'Order placed successfully!');
     }
