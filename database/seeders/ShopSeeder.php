@@ -59,7 +59,7 @@ class ShopSeeder extends Seeder
         $adidas = Brand::where('name', 'Adidas')->first();
         $noBrand = Brand::where('name', 'No Brand')->first();
 
-        // Insert Products
+        // Insert Products with Price and Stock
         $products = [
             [
                 'name' => 'iPhone 14',
@@ -68,7 +68,9 @@ class ShopSeeder extends Seeder
                 'status' => 'Stock In',
                 'category_id' => $electronics->id,
                 'brand_id' => $apple->id,
-                'featured' => true, // Mark as featured
+                'price' => 999.99, // Added price
+                'stock' => 50, // Added stock
+                'featured' => true,
             ],
             [
                 'name' => 'Samsung Galaxy S23',
@@ -77,7 +79,9 @@ class ShopSeeder extends Seeder
                 'status' => 'Stock In',
                 'category_id' => $electronics->id,
                 'brand_id' => $samsung->id,
-                'featured' => false, // Not featured
+                'price' => 899.99,
+                'stock' => 40,
+                'featured' => false,
             ],
             [
                 'name' => 'Nike Air Max',
@@ -86,7 +90,9 @@ class ShopSeeder extends Seeder
                 'status' => 'Stock In',
                 'category_id' => $fashion->id,
                 'brand_id' => $nike->id,
-                'featured' => true, // Mark as featured
+                'price' => 129.99,
+                'stock' => 100,
+                'featured' => true,
             ],
             [
                 'name' => 'Adidas Ultraboost',
@@ -95,7 +101,9 @@ class ShopSeeder extends Seeder
                 'status' => 'Stock In',
                 'category_id' => $fashion->id,
                 'brand_id' => $adidas->id,
-                'featured' => false, // Not featured
+                'price' => 139.99,
+                'stock' => 80,
+                'featured' => false,
             ],
             [
                 'name' => 'Air Fryer',
@@ -103,8 +111,10 @@ class ShopSeeder extends Seeder
                 'product_image' => 'air_fryer.jpg',
                 'status' => 'Stock In',
                 'category_id' => $home->id,
-                'brand_id' => $noBrand->id, // Assign default "No Brand" instead of NULL
-                'featured' => true, // Mark as featured
+                'brand_id' => $noBrand->id,
+                'price' => 79.99,
+                'stock' => 60,
+                'featured' => true,
             ],
         ];
 

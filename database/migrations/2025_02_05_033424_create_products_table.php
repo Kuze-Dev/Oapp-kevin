@@ -19,10 +19,12 @@ return new class extends Migration
         });
 
         Schema::create('categories', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->timestamps();
-        });
+    $table->id();
+    $table->string('name');
+    $table->foreignId('brand_id')->nullable()->constrained()->onDelete('cascade'); // Add this
+    $table->timestamps();
+});
+
 
         Schema::create('products', function (Blueprint $table) {
             $table->id();

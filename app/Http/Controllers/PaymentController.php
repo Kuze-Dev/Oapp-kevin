@@ -1,10 +1,11 @@
 <?php
 namespace App\Http\Controllers;
 
+use App\Models\Cart;
 use App\Models\Order;
-use App\Models\OrderItem;
 use App\Models\Payment;
 use Stripe\StripeClient;
+use App\Models\OrderItem;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -320,9 +321,23 @@ class PaymentController extends Controller
             ]);
         }
 
-        // Clear checkout session
-        session()->forget('checkout_data');
-        session()->forget('checkout_cart');
+      // Clear checkout session
+    session()->forget('checkout_data');
+    session()->forget('checkout_cart');
+
+    // Clear cart data for authenticated users
+    if (Auth::check()) {
+        // Get the product IDs that were in the order
+        $orderItemSkuIds = $order->orderItems->pluck('product_sku_id')->toArray();
+
+        // Delete cart items with those product SKU IDs
+        Cart::where('user_id', Auth::id())
+            ->whereIn('sku_id', $orderItemSkuIds)
+            ->delete();
+    } else {
+        // For guests, clear the entire cart session
+        session()->forget('cart');
+    }
 
         return redirect()->route('home')->with('success', 'Order placed successfully!');
     }
