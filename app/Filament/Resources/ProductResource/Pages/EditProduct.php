@@ -9,10 +9,6 @@ use Filament\Resources\Pages\EditRecord;
 class EditProduct extends EditRecord
 {
     protected static string $resource = ProductResource::class;
-    public static function getNavigationGroup(): ?string
-{
-    return 'Product Management';
-}
 
 
 

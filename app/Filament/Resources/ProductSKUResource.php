@@ -21,6 +21,7 @@ class ProductSKUResource extends Resource
     protected static ?string $navigationGroup = 'Shop Management';
     protected static ?string $navigationLabel = 'Product SKU';
     protected static ?string $navigationIcon = 'heroicon-o-tag';
+
     public static function getNavigationBadge(): ?string
     {
         return static::getModel()::count();
@@ -69,28 +70,27 @@ class ProductSKUResource extends Resource
             ]);
     }
 
-
-
-
-
     public static function table(Table $table): Table
     {
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('product.name')
                     ->label('Product')
-                    ->sortable(),
+                    ->sortable()
+                    ->searchable(),
 
-                    Tables\Columns\TextColumn::make('attributes')
-                    ->label('Attribute IDs')
-                    ->formatStateUsing(fn ($state) => self::extractAttributeIds($state))
-                    ->sortable(),
-                    ImageColumn::make('sku_image'),
+                Tables\Columns\TextColumn::make('attributes')
+                    ->label('Attributes')
+                    ->formatStateUsing(fn ($state) => self::extractAttributeValues($state))
+                    ->sortable()
+                    ->searchable(),
 
+                ImageColumn::make('sku_image'),
 
                 Tables\Columns\TextColumn::make('sku')
                     ->label('SKU')
-                    ->sortable(),
+                    ->sortable()
+                    ->searchable(),
 
                 Tables\Columns\TextColumn::make('price')
                     ->money()
@@ -100,9 +100,14 @@ class ProductSKUResource extends Resource
                     ->numeric()
                     ->sortable(),
             ])
+            ->filters([
+                Tables\Filters\SelectFilter::make('product_id')
+                    ->label('Product')
+                    ->options(Product::pluck('name', 'id')),
+
+            ])
             ->actions([
                 // Tables\Actions\ViewAction::make(),
-
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -126,17 +131,20 @@ class ProductSKUResource extends Resource
         return false;
     }
 
+    private static function extractAttributeValues($state): string
+    {
+        if (!$state) {
+            return '-';
+        }
 
-    private static function extractAttributeIds($state): string
-{
-    if (!$state) {
-        return '-';
+        $attributes = is_array($state) ? $state : json_decode($state, true);
+
+        if (!is_array($attributes)) {
+            return '-';
+        }
+
+        $values = array_map(fn($attr) => $attr['value'] ?? '', $attributes);
+
+        return implode(' | ', $values);
     }
-
-    $attributes = is_array($state) ? $state : json_decode($state, true);
-
-
-    return implode(', ', array_column($attributes, 'id'));
-}
-
 }
