@@ -23,16 +23,20 @@ class OrderResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-shopping-bag';
 
+<<<<<<< HEAD
     public static function getNavigationBadge(): ?string
     {
         return static::getModel()::count();
     }
 
 
+=======
+>>>>>>> 6fa30c76d0d4002774765c41f56d83cd0eda548f
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
+<<<<<<< HEAD
                 Forms\Components\Grid::make()
                     ->schema([
                         // Left column - Order details
@@ -78,14 +82,61 @@ class OrderResource extends Resource
                             ->schema([
                                 Forms\Components\TextInput::make('address')
                                     ->maxLength(255),
+=======
+                Forms\Components\TextInput::make('quantity')
+                    ->required()
+                    ->numeric(),
+                Forms\Components\TextInput::make('amount')
+                    ->required()
+                    ->numeric()
+                    ->prefix('$'),
+                Forms\Components\Toggle::make('is_paid')
+                    ->required(),
+                Forms\Components\Select::make('shipping_method')
+                    ->options([
+                        'standard' => 'Standard',
+                        'express' => 'Express',
+                        'overnight' => 'Overnight',
+                    ])
+                    ->searchable(),
+                Forms\Components\TextInput::make('shipping_fee')
+                    ->numeric()
+                    ->prefix('$'),
+                Forms\Components\Select::make('status')
+                    ->options([
+                        'pending' => 'Pending',
+                        'processing' => 'Processing',
+                        'shipped' => 'Shipped',
+                        'delivered' => 'Delivered',
+                        'cancelled' => 'Cancelled',
+                    ])
+                    ->required()
+                    ->default('pending'),
+                Forms\Components\Select::make('user_id')
+                    ->relationship('user', 'name')
+                    ->searchable(),
+                Forms\Components\Section::make('Shipping Address')
+                    ->schema([
+                        Forms\Components\TextInput::make('address')
+                            ->maxLength(255),
+                        Forms\Components\Grid::make()
+                            ->schema([
+>>>>>>> 6fa30c76d0d4002774765c41f56d83cd0eda548f
                                 Forms\Components\TextInput::make('city')
                                     ->maxLength(255),
                                 Forms\Components\TextInput::make('state')
                                     ->maxLength(255),
+<<<<<<< HEAD
+=======
+                            ]),
+                        Forms\Components\Grid::make()
+                            ->schema([
+>>>>>>> 6fa30c76d0d4002774765c41f56d83cd0eda548f
                                 Forms\Components\TextInput::make('zip_code')
                                     ->maxLength(255),
                                 Forms\Components\TextInput::make('country')
                                     ->maxLength(255),
+<<<<<<< HEAD
                                 Forms\Components\TextInput::make('phone')
                                     ->tel()
                                     ->maxLength(255),
@@ -99,6 +150,14 @@ class OrderResource extends Resource
                         Forms\Components\Textarea::make('notes')
                             ->columnSpanFull(),
                     ])
+=======
+                            ]),
+                        Forms\Components\TextInput::make('phone')
+                            ->tel()
+                            ->maxLength(255),
+                    ]),
+                Forms\Components\Textarea::make('notes')
+>>>>>>> 6fa30c76d0d4002774765c41f56d83cd0eda548f
                     ->columnSpanFull(),
             ]);
     }
@@ -153,10 +212,13 @@ class OrderResource extends Resource
                     ->modalHeading('Order Details')
                     ->modalWidth(MaxWidth::ThreeExtraLarge)
                     ->slideOver(),
+<<<<<<< HEAD
                 Tables\Actions\EditAction::make()
                     ->modalHeading('Edit Order')
                     ->modalWidth(MaxWidth::ThreeExtraLarge)
                     ->slideOver(),
+=======
+>>>>>>> 6fa30c76d0d4002774765c41f56d83cd0eda548f
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -165,7 +227,10 @@ class OrderResource extends Resource
             ]);
     }
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 6fa30c76d0d4002774765c41f56d83cd0eda548f
     public static function infolist(Infolist $infolist): Infolist
     {
         return $infolist
@@ -253,9 +318,13 @@ class OrderResource extends Resource
     {
         return [
             'index' => Pages\ListOrders::route('/'),
+<<<<<<< HEAD
             'create' => Pages\CreateOrder::route('/create'),
             'view' => Pages\ViewOrder::route('/{record}'),
             'edit' => Pages\EditOrder::route('/{record}/edit'),
+=======
+            'view' => Pages\ViewOrder::route('/{record}'),
+>>>>>>> 6fa30c76d0d4002774765c41f56d83cd0eda548f
         ];
     }
 
