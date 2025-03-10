@@ -23,65 +23,82 @@ class OrderResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-shopping-bag';
 
+    public static function getNavigationBadge(): ?string
+    {
+        return static::getModel()::count();
+    }
+
+
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('quantity')
-                    ->required()
-                    ->numeric(),
-                Forms\Components\TextInput::make('amount')
-                    ->required()
-                    ->numeric()
-                    ->prefix('$'),
-                Forms\Components\Toggle::make('is_paid')
-                    ->required(),
-                Forms\Components\Select::make('shipping_method')
-                    ->options([
-                        'standard' => 'Standard',
-                        'express' => 'Express',
-                        'overnight' => 'Overnight',
-                    ])
-                    ->searchable(),
-                Forms\Components\TextInput::make('shipping_fee')
-                    ->numeric()
-                    ->prefix('$'),
-                Forms\Components\Select::make('status')
-                    ->options([
-                        'pending' => 'Pending',
-                        'processing' => 'Processing',
-                        'shipped' => 'Shipped',
-                        'delivered' => 'Delivered',
-                        'cancelled' => 'Cancelled',
-                    ])
-                    ->required()
-                    ->default('pending'),
-                Forms\Components\Select::make('user_id')
-                    ->relationship('user', 'name')
-                    ->searchable(),
-                Forms\Components\Section::make('Shipping Address')
+                Forms\Components\Grid::make()
                     ->schema([
-                        Forms\Components\TextInput::make('address')
-                            ->maxLength(255),
-                        Forms\Components\Grid::make()
+                        // Left column - Order details
+                        Forms\Components\Section::make('Order Information')
                             ->schema([
+                                Forms\Components\TextInput::make('quantity')
+                                    ->required()
+                                    ->numeric(),
+                                Forms\Components\TextInput::make('amount')
+                                    ->required()
+                                    ->numeric()
+                                    ->prefix('$'),
+                                Forms\Components\Toggle::make('is_paid')
+                                    ->required(),
+                                Forms\Components\Select::make('shipping_method')
+                                    ->options([
+                                        'standard' => 'Standard',
+                                        'express' => 'Express',
+                                        'overnight' => 'Overnight',
+                                    ])
+                                    ->searchable(),
+                                Forms\Components\TextInput::make('shipping_fee')
+                                    ->numeric()
+                                    ->prefix('$'),
+                                Forms\Components\Select::make('status')
+                                    ->options([
+                                        'pending' => 'Pending',
+                                        'processing' => 'Processing',
+                                        'shipped' => 'Shipped',
+                                        'delivered' => 'Delivered',
+                                        'cancelled' => 'Cancelled',
+                                    ])
+                                    ->required()
+                                    ->default('pending'),
+                                Forms\Components\Select::make('user_id')
+                                    ->relationship('user', 'name')
+                                    ->searchable(),
+                            ])
+                            ->columnSpan(1),
+
+                        // Right column - Shipping Address
+                        Forms\Components\Section::make('Shipping Address')
+                            ->schema([
+                                Forms\Components\TextInput::make('address')
+                                    ->maxLength(255),
                                 Forms\Components\TextInput::make('city')
                                     ->maxLength(255),
                                 Forms\Components\TextInput::make('state')
                                     ->maxLength(255),
-                            ]),
-                        Forms\Components\Grid::make()
-                            ->schema([
                                 Forms\Components\TextInput::make('zip_code')
                                     ->maxLength(255),
                                 Forms\Components\TextInput::make('country')
                                     ->maxLength(255),
-                            ]),
-                        Forms\Components\TextInput::make('phone')
-                            ->tel()
-                            ->maxLength(255),
-                    ]),
-                Forms\Components\Textarea::make('notes')
+                                Forms\Components\TextInput::make('phone')
+                                    ->tel()
+                                    ->maxLength(255),
+                            ])
+                            ->columnSpan(1),
+                    ])
+                    ->columns(2),
+
+                Forms\Components\Section::make('Additional Information')
+                    ->schema([
+                        Forms\Components\Textarea::make('notes')
+                            ->columnSpanFull(),
+                    ])
                     ->columnSpanFull(),
             ]);
     }
@@ -134,6 +151,10 @@ class OrderResource extends Resource
             ->actions([
                 Tables\Actions\ViewAction::make()
                     ->modalHeading('Order Details')
+                    ->modalWidth(MaxWidth::ThreeExtraLarge)
+                    ->slideOver(),
+                Tables\Actions\EditAction::make()
+                    ->modalHeading('Edit Order')
                     ->modalWidth(MaxWidth::ThreeExtraLarge)
                     ->slideOver(),
             ])
@@ -232,7 +253,9 @@ class OrderResource extends Resource
     {
         return [
             'index' => Pages\ListOrders::route('/'),
+            'create' => Pages\CreateOrder::route('/create'),
             'view' => Pages\ViewOrder::route('/{record}'),
+            'edit' => Pages\EditOrder::route('/{record}/edit'),
         ];
     }
 

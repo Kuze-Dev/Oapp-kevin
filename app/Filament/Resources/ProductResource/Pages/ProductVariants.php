@@ -22,14 +22,6 @@ class ProductVariants extends EditRecord
 {
     protected static string $resource = ProductResource::class;
     protected static ?string $navigationIcon = 'heroicon-o-archive-box';
-    public static function getNavigationGroup(): ?string
-    {
-        return 'Product Management';
-    }
-//     public static function getNavigationGroup(): ?string
-// {
-//     return 'Product Management';
-// }
 
 
 
