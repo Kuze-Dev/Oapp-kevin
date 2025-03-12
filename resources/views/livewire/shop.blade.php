@@ -98,38 +98,29 @@
         <span>View Details</span>
     </button>
 </a>
-
-
-
-
                     </div>
                 </div>
             </div>
         @empty
-            @for ($i = 0; $i < 3; $i++)
-                <div class="bg-gray-200 animate-pulse rounded-xl shadow-lg overflow-hidden">
-                    <div class="w-full h-64 bg-gray-300"></div>
-                    <div class="p-6">
-                        <div class="h-6 bg-gray-400 rounded w-3/4 mb-4"></div>
-                        <div class="h-4 bg-gray-400 rounded w-1/2 mb-2"></div>
-                        <div class="h-4 bg-gray-400 rounded w-1/3"></div>
-                    </div>
-                </div>
-            @endfor
+            <div class="col-span-1 sm:col-span-2 lg:col-span-3 flex flex-col items-center justify-center p-12 bg-white rounded-xl shadow-lg">
+                <!-- Hero Icon: Package-X (Outline) -->
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-32 w-32 text-gray-400 mb-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m8.25 3v6.75m0-6.75h-3.75m3.75 0h3.75M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+                </svg>
+
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">No Products Found</h2>
+                <p class="text-gray-600 text-center mb-6 max-w-md">We couldn't find any products matching your criteria. Try adjusting your filters or search terms.</p>
+            </div>
         @endforelse
     </div>
 
     <!-- Pagination or Load More -->
+    @if(count($products) > 0)
     <div class="mt-8 text-center">
         <button wire:click="loadMore"
             class="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-full hover:bg-indigo-700 transition-all duration-300">
             Load More
         </button>
     </div>
-
-
-
-
-
+    @endif
 </div>
-
