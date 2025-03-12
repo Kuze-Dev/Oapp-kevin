@@ -13,31 +13,25 @@ use Filament\Tables\Table;
 use Filament\Support\Enums\FontWeight;
 use Filament\Support\Enums\MaxWidth;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Infolists;
 use Filament\Infolists\Infolist;
 
 class OrderResource extends Resource
 {
     protected static ?string $model = Order::class;
-
     protected static ?string $navigationIcon = 'heroicon-o-shopping-bag';
+    protected static ?string $navigationGroup = 'Order Management';
 
-<<<<<<< HEAD
     public static function getNavigationBadge(): ?string
     {
         return static::getModel()::count();
     }
 
-
-=======
->>>>>>> 6fa30c76d0d4002774765c41f56d83cd0eda548f
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-<<<<<<< HEAD
-                Forms\Components\Grid::make()
+                Forms\Components\Grid::make(2)
                     ->schema([
                         // Left column - Order details
                         Forms\Components\Section::make('Order Information')
@@ -73,92 +67,54 @@ class OrderResource extends Resource
                                     ->default('pending'),
                                 Forms\Components\Select::make('user_id')
                                     ->relationship('user', 'name')
-                                    ->searchable(),
+                                    ->searchable()
+                                    ->required(),
                             ])
                             ->columnSpan(1),
 
-                        // Right column - Shipping Address
-                        Forms\Components\Section::make('Shipping Address')
+                        // Right column - Shipping Address and Additional Notes
+                        Forms\Components\Grid::make(1)
                             ->schema([
-                                Forms\Components\TextInput::make('address')
-                                    ->maxLength(255),
-=======
-                Forms\Components\TextInput::make('quantity')
-                    ->required()
-                    ->numeric(),
-                Forms\Components\TextInput::make('amount')
-                    ->required()
-                    ->numeric()
-                    ->prefix('$'),
-                Forms\Components\Toggle::make('is_paid')
-                    ->required(),
-                Forms\Components\Select::make('shipping_method')
-                    ->options([
-                        'standard' => 'Standard',
-                        'express' => 'Express',
-                        'overnight' => 'Overnight',
-                    ])
-                    ->searchable(),
-                Forms\Components\TextInput::make('shipping_fee')
-                    ->numeric()
-                    ->prefix('$'),
-                Forms\Components\Select::make('status')
-                    ->options([
-                        'pending' => 'Pending',
-                        'processing' => 'Processing',
-                        'shipped' => 'Shipped',
-                        'delivered' => 'Delivered',
-                        'cancelled' => 'Cancelled',
-                    ])
-                    ->required()
-                    ->default('pending'),
-                Forms\Components\Select::make('user_id')
-                    ->relationship('user', 'name')
-                    ->searchable(),
-                Forms\Components\Section::make('Shipping Address')
-                    ->schema([
-                        Forms\Components\TextInput::make('address')
-                            ->maxLength(255),
-                        Forms\Components\Grid::make()
-                            ->schema([
->>>>>>> 6fa30c76d0d4002774765c41f56d83cd0eda548f
-                                Forms\Components\TextInput::make('city')
-                                    ->maxLength(255),
-                                Forms\Components\TextInput::make('state')
-                                    ->maxLength(255),
-<<<<<<< HEAD
-=======
-                            ]),
-                        Forms\Components\Grid::make()
-                            ->schema([
->>>>>>> 6fa30c76d0d4002774765c41f56d83cd0eda548f
-                                Forms\Components\TextInput::make('zip_code')
-                                    ->maxLength(255),
-                                Forms\Components\TextInput::make('country')
-                                    ->maxLength(255),
-<<<<<<< HEAD
-                                Forms\Components\TextInput::make('phone')
-                                    ->tel()
-                                    ->maxLength(255),
-                            ])
-                            ->columnSpan(1),
-                    ])
-                    ->columns(2),
+                                // Shipping Address Section
+                                Forms\Components\Section::make('Shipping Address')
+                                    ->schema([
+                                        Forms\Components\TextInput::make('address')
+                                            ->maxLength(255)
+                                            ->required(),
+                                        Forms\Components\Grid::make(2)
+                                            ->schema([
+                                                Forms\Components\TextInput::make('city')
+                                                    ->maxLength(255)
+                                                    ->required(),
+                                                Forms\Components\TextInput::make('state')
+                                                    ->maxLength(255)
+                                                    ->required(),
+                                            ]),
+                                        Forms\Components\Grid::make(2)
+                                            ->schema([
+                                                Forms\Components\TextInput::make('zip_code')
+                                                    ->maxLength(255)
+                                                    ->required(),
+                                                Forms\Components\TextInput::make('country')
+                                                    ->maxLength(255)
+                                                    ->required(),
+                                            ]),
+                                        Forms\Components\TextInput::make('phone')
+                                            ->tel()
+                                            ->maxLength(255),
+                                    ]),
 
-                Forms\Components\Section::make('Additional Information')
-                    ->schema([
-                        Forms\Components\Textarea::make('notes')
-                            ->columnSpanFull(),
-                    ])
-=======
-                            ]),
-                        Forms\Components\TextInput::make('phone')
-                            ->tel()
-                            ->maxLength(255),
+                                // Additional Notes Section - Now placed below Shipping Address in the right column
+                                Forms\Components\Section::make('Additional Notes')
+                                    ->schema([
+                                        Forms\Components\Textarea::make('notes')
+                                            ->placeholder('Enter any additional notes or information'),
+                                    ])
+                                    ->collapsible(),
+
+                                      ])
+                            ->columnSpan(1),
                     ]),
-                Forms\Components\Textarea::make('notes')
->>>>>>> 6fa30c76d0d4002774765c41f56d83cd0eda548f
-                    ->columnSpanFull(),
             ]);
     }
 
@@ -212,13 +168,10 @@ class OrderResource extends Resource
                     ->modalHeading('Order Details')
                     ->modalWidth(MaxWidth::ThreeExtraLarge)
                     ->slideOver(),
-<<<<<<< HEAD
                 Tables\Actions\EditAction::make()
                     ->modalHeading('Edit Order')
                     ->modalWidth(MaxWidth::ThreeExtraLarge)
                     ->slideOver(),
-=======
->>>>>>> 6fa30c76d0d4002774765c41f56d83cd0eda548f
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -227,10 +180,6 @@ class OrderResource extends Resource
             ]);
     }
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 6fa30c76d0d4002774765c41f56d83cd0eda548f
     public static function infolist(Infolist $infolist): Infolist
     {
         return $infolist
@@ -297,7 +246,7 @@ class OrderResource extends Resource
                             ]),
                     ]),
 
-                Infolists\Components\Section::make('Additional Information')
+                Infolists\Components\Section::make('Additional Notes')
                     ->schema([
                         Infolists\Components\TextEntry::make('notes')
                             ->markdown()
@@ -310,7 +259,7 @@ class OrderResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RelationManagers\OrderItemsRelationManager::class,
         ];
     }
 
@@ -318,13 +267,9 @@ class OrderResource extends Resource
     {
         return [
             'index' => Pages\ListOrders::route('/'),
-<<<<<<< HEAD
             'create' => Pages\CreateOrder::route('/create'),
             'view' => Pages\ViewOrder::route('/{record}'),
             'edit' => Pages\EditOrder::route('/{record}/edit'),
-=======
-            'view' => Pages\ViewOrder::route('/{record}'),
->>>>>>> 6fa30c76d0d4002774765c41f56d83cd0eda548f
         ];
     }
 
