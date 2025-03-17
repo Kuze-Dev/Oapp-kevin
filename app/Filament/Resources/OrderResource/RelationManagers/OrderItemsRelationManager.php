@@ -77,12 +77,12 @@ class OrderItemsRelationManager extends RelationManager
             ])
 
             ->actions([
-                Tables\Actions\EditAction::make()
-                    ->mutateFormDataUsing(function (array $data): array {
-                        $data['subtotal'] = $data['quantity'] * $data['price'];
-                        return $data;
-                    }),
-                Tables\Actions\DeleteAction::make(),
+                // Tables\Actions\EditAction::make()
+                //     ->mutateFormDataUsing(function (array $data): array {
+                //         $data['subtotal'] = $data['quantity'] * $data['price'];
+                //         return $data;
+                //     }),
+                // Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
