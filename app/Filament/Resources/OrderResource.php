@@ -15,106 +15,137 @@ use Filament\Support\Enums\MaxWidth;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Infolists;
 use Filament\Infolists\Infolist;
+use Filament\Infolists\Components\Actions\Action;
+use Filament\Notifications\Notification;
+use Filament\Forms\Components\Wizard;
+use Filament\Forms\Components\Wizard\Step;
 
 class OrderResource extends Resource
 {
     protected static ?string $model = Order::class;
     protected static ?string $navigationIcon = 'heroicon-o-shopping-bag';
     protected static ?string $navigationGroup = 'Order Management';
+    protected static ?int $navigationSort = 1;
 
     public static function getNavigationBadge(): ?string
     {
         return static::getModel()::count();
     }
 
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'primary';
+    }
+
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\Grid::make(2)
-                    ->schema([
-                        // Left column - Order details
-                        Forms\Components\Section::make('Order Information')
-                            ->schema([
-                                Forms\Components\TextInput::make('quantity')
-                                    ->required()
-                                    ->numeric(),
-                                Forms\Components\TextInput::make('amount')
-                                    ->required()
-                                    ->numeric()
-                                    ->prefix('$'),
-                                Forms\Components\Toggle::make('is_paid')
-                                    ->required(),
-                                Forms\Components\Select::make('shipping_method')
-                                    ->options([
-                                        'standard' => 'Standard',
-                                        'express' => 'Express',
-                                        'overnight' => 'Overnight',
-                                    ])
-                                    ->searchable(),
-                                Forms\Components\TextInput::make('shipping_fee')
-                                    ->numeric()
-                                    ->prefix('$'),
-                                Forms\Components\Select::make('status')
-                                    ->options([
-                                        'pending' => 'Pending',
-                                        'processing' => 'Processing',
-                                        'shipped' => 'Shipped',
-                                        'delivered' => 'Delivered',
-                                        'cancelled' => 'Cancelled',
-                                    ])
-                                    ->required()
-                                    ->default('pending'),
-                                Forms\Components\Select::make('user_id')
-                                    ->relationship('user', 'name')
-                                    ->searchable()
-                                    ->required(),
-                            ])
-                            ->columnSpan(1),
+                Wizard::make([
+                    Step::make('Order')
+                        ->icon('heroicon-o-shopping-cart')
+                        ->description('Basic order details')
+                        ->schema([
+                            Forms\Components\Grid::make(2)
+                                ->schema([
+                                    Forms\Components\TextInput::make('quantity')
+                                        ->required()
+                                        ->numeric(),
+                                    Forms\Components\TextInput::make('amount')
+                                        ->required()
+                                        ->numeric()
+                                        ->prefix('$'),
+                                ]),
+                            Forms\Components\Grid::make(2)
+                                ->schema([
+                                    Forms\Components\Toggle::make('is_paid')
+                                        ->required()
+                                        ->inline(false),
+                                    Forms\Components\Select::make('status')
+                                        ->options([
+                                            'pending' => 'Pending',
+                                            'processing' => 'Processing',
+                                            'shipped' => 'Shipped',
+                                            'delivered' => 'Delivered',
+                                            'cancelled' => 'Cancelled',
+                                        ])
+                                        ->required()
+                                        ->default('pending'),
+                                ]),
+                            Forms\Components\Select::make('user_id')
+                                ->relationship('user', 'name')
+                                ->searchable()
+                                ->preload()
+                                ->required(),
+                        ]),
 
-                        // Right column - Shipping Address and Additional Notes
-                        Forms\Components\Grid::make(1)
-                            ->schema([
-                                // Shipping Address Section
-                                Forms\Components\Section::make('Shipping Address')
-                                    ->schema([
-                                        Forms\Components\TextInput::make('address')
-                                            ->maxLength(255)
-                                            ->required(),
-                                        Forms\Components\Grid::make(2)
-                                            ->schema([
-                                                Forms\Components\TextInput::make('city')
-                                                    ->maxLength(255)
-                                                    ->required(),
-                                                Forms\Components\TextInput::make('state')
-                                                    ->maxLength(255)
-                                                    ->required(),
-                                            ]),
-                                        Forms\Components\Grid::make(2)
-                                            ->schema([
-                                                Forms\Components\TextInput::make('zip_code')
-                                                    ->maxLength(255)
-                                                    ->required(),
-                                                Forms\Components\TextInput::make('country')
-                                                    ->maxLength(255)
-                                                    ->required(),
-                                            ]),
-                                        Forms\Components\TextInput::make('phone')
-                                            ->tel()
-                                            ->maxLength(255),
-                                    ]),
+                    Step::make('Delivery')
+                        ->icon('heroicon-o-truck')
+                        ->description('Delivery information')
+                        ->schema([
+                            Forms\Components\Grid::make(2)
+                                ->schema([
+                                    Forms\Components\Select::make('shipping_method')
+                                        ->options([
+                                            'standard' => 'Standard',
+                                            'express' => 'Express',
+                                            'overnight' => 'Overnight',
+                                        ])
+                                        ->searchable()
+                                        ->required(),
+                                    Forms\Components\TextInput::make('shipping_fee')
+                                        ->numeric()
+                                        ->prefix('$')
+                                        ->required(),
+                                ]),
+                            Forms\Components\TextInput::make('address')
+                                ->maxLength(255)
+                                ->required(),
+                            Forms\Components\Grid::make(2)
+                                ->schema([
+                                    Forms\Components\TextInput::make('city')
+                                        ->maxLength(255)
+                                        ->required(),
+                                    Forms\Components\TextInput::make('state')
+                                        ->maxLength(255)
+                                        ->required(),
+                                ]),
+                            Forms\Components\Grid::make(2)
+                                ->schema([
+                                    Forms\Components\TextInput::make('zip_code')
+                                        ->maxLength(255)
+                                        ->required(),
+                                    Forms\Components\TextInput::make('country')
+                                        ->maxLength(255)
+                                        ->required(),
+                                ]),
+                            Forms\Components\TextInput::make('phone')
+                                ->tel()
+                                ->maxLength(255)
+                                ->required(),
+                        ]),
 
-                                // Additional Notes Section - Now placed below Shipping Address in the right column
-                                Forms\Components\Section::make('Additional Notes')
-                                    ->schema([
-                                        Forms\Components\Textarea::make('notes')
-                                            ->placeholder('Enter any additional notes or information'),
-                                    ])
-                                    ->collapsible(),
-
-                                      ])
-                            ->columnSpan(1),
-                    ]),
+                    Step::make('Billing')
+                        ->icon('heroicon-o-credit-card')
+                        ->description('Payment information')
+                        ->schema([
+                            Forms\Components\TextInput::make('payment_method')
+                                ->required()
+                                ->maxLength(255),
+                            Forms\Components\TextInput::make('transaction_id')
+                                ->maxLength(255),
+                            Forms\Components\Toggle::make('is_paid')
+                                ->required()
+                                ->inline(false)
+                                ->label('Payment received'),
+                            Forms\Components\Textarea::make('notes')
+                                ->placeholder('Enter any additional notes or information')
+                                ->columnSpanFull()
+                                ->rows(5),
+                        ]),
+                ])
+                ->skippable(false)
+                ->persistStepInQueryString()
             ]);
     }
 
@@ -204,23 +235,89 @@ class OrderResource extends Resource
                                     ->label('Total Amount'),
                                 Infolists\Components\TextEntry::make('quantity')
                                     ->label('Items'),
-                                Infolists\Components\IconEntry::make('is_paid')
-                                    ->boolean()
-                                    ->label('Payment Status')
-                                    ->trueIcon('heroicon-o-check-circle')
-                                    ->falseIcon('heroicon-o-x-circle')
-                                    ->trueColor('success')
-                                    ->falseColor('danger'),
+                                Infolists\Components\Grid::make([
+                                    'default' => 1,
+                                    'sm' => 1,
+                                    'md' => 2,
+                                ])
+                                ->schema([
+                                    Infolists\Components\IconEntry::make('is_paid')
+                                        ->boolean()
+                                        ->label('Payment Status')
+                                        ->trueIcon('heroicon-o-check-circle')
+                                        ->falseIcon('heroicon-o-x-circle')
+                                        ->trueColor('success')
+                                        ->falseColor('danger'),
+                                    Infolists\Components\Actions::make([
+                                        Action::make('editPaymentStatus')
+                                            ->label('Edit')
+                                            ->icon('heroicon-m-pencil-square')
+                                            ->size('sm')
+                                            ->color('primary')
+                                            ->form([
+                                                Forms\Components\Toggle::make('is_paid')
+                                                    ->label('Mark as Paid')
+                                                    ->default(fn ($record) => $record->is_paid),
+                                            ])
+                                            ->action(function (array $data, $record): void {
+                                                $record->update([
+                                                    'is_paid' => $data['is_paid'],
+                                                ]);
+
+                                                Notification::make()
+                                                    ->title('Payment status updated successfully')
+                                                    ->success()
+                                                    ->send();
+                                            })
+                                    ])->extraAttributes(['class' => 'flex justify-end']),
+                                ]),
                             ]),
-                        Infolists\Components\TextEntry::make('status')
-                            ->badge()
-                            ->color(fn (string $state): string => match ($state) {
-                                'cancelled' => 'danger',
-                                'pending' => 'warning',
-                                'processing' => 'primary',
-                                'shipped', 'delivered' => 'success',
-                                default => 'gray',
-                            }),
+                        Infolists\Components\Grid::make([
+                            'default' => 1,
+                            'sm' => 1,
+                            'md' => 2,
+                        ])
+                        ->schema([
+                            Infolists\Components\TextEntry::make('status')
+                                ->badge()
+                                ->label('Order Status')
+                                ->color(fn (string $state): string => match ($state) {
+                                    'cancelled' => 'danger',
+                                    'pending' => 'warning',
+                                    'processing' => 'primary',
+                                    'shipped', 'delivered' => 'success',
+                                    default => 'gray',
+                                }),
+                            Infolists\Components\Actions::make([
+                                Action::make('editStatus')
+                                    ->label('Edit')
+                                    ->icon('heroicon-m-pencil-square')
+                                    ->size('sm')
+                                    ->color('primary')
+                                    ->form([
+                                        Forms\Components\Select::make('status')
+                                            ->label('Order Status')
+                                            ->options([
+                                                'pending' => 'Pending',
+                                                'processing' => 'Processing',
+                                                'shipped' => 'Shipped',
+                                                'delivered' => 'Delivered',
+                                                'cancelled' => 'Cancelled',
+                                            ])
+                                            ->default(fn ($record) => $record->status),
+                                    ])
+                                    ->action(function (array $data, $record): void {
+                                        $record->update([
+                                            'status' => $data['status'],
+                                        ]);
+
+                                        Notification::make()
+                                            ->title('Order status updated successfully')
+                                            ->success()
+                                            ->send();
+                                    })
+                            ])->extraAttributes(['class' => 'flex justify-end']),
+                        ]),
                     ])
                     ->columns(1),
 
@@ -271,10 +368,5 @@ class OrderResource extends Resource
             'view' => Pages\ViewOrder::route('/{record}'),
             'edit' => Pages\EditOrder::route('/{record}/edit'),
         ];
-    }
-
-    public static function canCreate(): bool
-    {
-        return false;
     }
 }
