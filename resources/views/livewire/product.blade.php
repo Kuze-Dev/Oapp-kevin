@@ -112,4 +112,5 @@
             </div>
         </div>
     </div>
+    <livewire:page-component.comment-section :product-id="$product->id" />
 </div>

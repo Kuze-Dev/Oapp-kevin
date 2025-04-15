@@ -23,9 +23,10 @@ class PaymentController extends Controller
             return redirect()->route('checkout')->with('error', 'No checkout data found');
         }
 
-        // Create order from checkout data
+        // Create order from checkout data with a proper order number format
+        // matching the format used in OrderResource (ORD-XXXXXXXX)
         $order = Order::create([
-            'quantity' => $checkoutData['items']->sum('quantity'),
+            'order_number' => 'ORD-' . strtoupper(Str::random(8)),
             'amount' => $checkoutData['total'],
             'is_paid' => false,
             'shipping_method' => $checkoutData['shipping_method'],
@@ -39,9 +40,11 @@ class PaymentController extends Controller
             'country' => $checkoutData['billing']['country'],
             'phone' => $checkoutData['billing']['phone'],
             'notes' => $checkoutData['billing']['notes'] ?? null,
+            'payment_method' => $checkoutData['payment_method'] ?? null, // Add payment method
+            'transaction_id' => null, // Will be updated after payment
         ]);
 
-        // Create order items
+        // Create order items with all required fields matching OrderResource
         foreach ($checkoutData['items'] as $item) {
             OrderItem::create([
                 'order_id' => $order->id,
@@ -244,13 +247,17 @@ class PaymentController extends Controller
         $gateway = $request->query('gateway');
 
         $order = Order::findOrFail($orderId);
+
+        // Update all necessary fields for OrderResource compatibility
         $order->update([
             'is_paid' => true,
-            'status' => 'processing'
+            'status' => 'processing',
+            'payment_method' => $gateway, // Update payment method with the actual gateway used
         ]);
 
         $billingDetails = Session::get('checkout_data.billing', []);
         $userId = Auth::id();
+        $referenceNumber = '';
 
         if ($gateway === 'paymongo') {
             $sessionId = session('paymongo_sessionId');
@@ -276,6 +283,11 @@ class PaymentController extends Controller
                     $totalAmount += ($item['amount'] * $item['quantity']) / 100; // Convert back from cents
                 }
 
+                // Update the order with transaction ID
+                $order->update([
+                    'transaction_id' => $referenceNumber
+                ]);
+
                 Payment::create([
                     'order_id' => $orderId,
                     'user_id' => $userId,
@@ -296,6 +308,12 @@ class PaymentController extends Controller
             $responseData = $response->toArray();
 
             session()->forget('stripe_checkout_id');
+            $referenceNumber = $responseData['metadata']['reference_number'] ?? Str::random(10);
+
+            // Update the order with transaction ID
+            $order->update([
+                'transaction_id' => $referenceNumber
+            ]);
 
             Payment::create([
                 'order_id' => $orderId,
@@ -305,10 +323,17 @@ class PaymentController extends Controller
                 'name' => $responseData['customer_details']['name'] ?? $billingDetails['name'] ?? 'Customer',
                 'email' => $responseData['customer_email'] ?? $billingDetails['email'] ?? 'customer@example.com',
                 'phone' => $responseData['customer_details']['phone'] ?? $billingDetails['phone'] ?? '9000000000',
-                'reference_number' => $responseData['metadata']['reference_number'],
+                'reference_number' => $referenceNumber,
             ]);
         } else {
             // For cash on delivery or other methods
+            $referenceNumber = 'COD-' . Str::random(10);
+
+            // Update the order with transaction ID for COD as well
+            $order->update([
+                'transaction_id' => $referenceNumber
+            ]);
+
             Payment::create([
                 'order_id' => $orderId,
                 'user_id' => $userId,
@@ -317,27 +342,27 @@ class PaymentController extends Controller
                 'name' => $billingDetails['name'] ?? 'Customer',
                 'email' => $billingDetails['email'] ?? 'customer@example.com',
                 'phone' => $billingDetails['phone'] ?? '9000000000',
-                'reference_number' => Str::random(10),
+                'reference_number' => $referenceNumber,
             ]);
         }
 
-      // Clear checkout session
-    session()->forget('checkout_data');
-    session()->forget('checkout_cart');
+        // Clear checkout session
+        session()->forget('checkout_data');
+        session()->forget('checkout_cart');
 
-    // Clear cart data for authenticated users
-    if (Auth::check()) {
-        // Get the product IDs that were in the order
-        $orderItemSkuIds = $order->orderItems->pluck('product_sku_id')->toArray();
+        // Clear cart data for authenticated users
+        if (Auth::check()) {
+            // Get the product IDs that were in the order
+            $orderItemSkuIds = $order->orderItems->pluck('product_sku_id')->toArray();
 
-        // Delete cart items with those product SKU IDs
-        Cart::where('user_id', Auth::id())
-            ->whereIn('sku_id', $orderItemSkuIds)
-            ->delete();
-    } else {
-        // For guests, clear the entire cart session
-        session()->forget('cart');
-    }
+            // Delete cart items with those product SKU IDs
+            Cart::where('user_id', Auth::id())
+                ->whereIn('sku_id', $orderItemSkuIds)
+                ->delete();
+        } else {
+            // For guests, clear the entire cart session
+            session()->forget('cart');
+        }
 
         return redirect()->route('home')->with('success', 'Order placed successfully!');
     }

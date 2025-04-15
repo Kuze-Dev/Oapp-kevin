@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\OrderResource\Pages;
 use App\Filament\Resources\OrderResource\RelationManagers;
 use App\Models\Order;
+use App\Models\ProductSKU;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -19,6 +20,7 @@ use Filament\Infolists\Components\Actions\Action;
 use Filament\Notifications\Notification;
 use Filament\Forms\Components\Wizard;
 use Filament\Forms\Components\Wizard\Step;
+use Illuminate\Support\Str;
 
 class OrderResource extends Resource
 {
@@ -46,37 +48,149 @@ class OrderResource extends Resource
                         ->icon('heroicon-o-shopping-cart')
                         ->description('Basic order details')
                         ->schema([
-                            Forms\Components\Grid::make(2)
-                                ->schema([
-                                    Forms\Components\TextInput::make('quantity')
-                                        ->required()
-                                        ->numeric(),
-                                    Forms\Components\TextInput::make('amount')
-                                        ->required()
-                                        ->numeric()
-                                        ->prefix('$'),
-                                ]),
-                            Forms\Components\Grid::make(2)
-                                ->schema([
-                                    Forms\Components\Toggle::make('is_paid')
-                                        ->required()
-                                        ->inline(false),
-                                    Forms\Components\Select::make('status')
-                                        ->options([
-                                            'pending' => 'Pending',
-                                            'processing' => 'Processing',
-                                            'shipped' => 'Shipped',
-                                            'delivered' => 'Delivered',
-                                            'cancelled' => 'Cancelled',
-                                        ])
-                                        ->required()
-                                        ->default('pending'),
-                                ]),
+                            Forms\Components\TextInput::make('order_number')
+                                ->default(fn () => 'ORD-' . strtoupper(Str::random(8)))
+                                ->disabled()
+                                ->dehydrated()
+                                ->required(),
                             Forms\Components\Select::make('user_id')
                                 ->relationship('user', 'name')
                                 ->searchable()
                                 ->preload()
-                                ->required(),
+                                ->required()
+                                ->label('Customer')
+                                ->columnSpanFull(),
+                            Forms\Components\Section::make('Customer Information')
+                                ->schema([
+                                    Forms\Components\Placeholder::make('customer_name')
+                                        ->label('Name')
+                                        ->content(fn ($get) => \App\Models\User::find($get('user_id'))?->name ?? 'Select a customer'),
+                                    Forms\Components\Placeholder::make('customer_email')
+                                        ->label('Email')
+                                        ->content(fn ($get) => \App\Models\User::find($get('user_id'))?->email ?? 'Select a customer'),
+                                    Forms\Components\Placeholder::make('customer_phone')
+                                        ->label('Phone')
+                                        ->content(fn ($get) => \App\Models\User::find($get('user_id'))?->phone ?? 'N/A'),
+                                ])
+                                ->columns(3)
+                                ->visible(fn ($get) => $get('user_id')),
+                            Forms\Components\Select::make('status')
+                                ->options([
+                                    'pending' => 'Pending',
+                                    'processing' => 'Processing',
+                                    'shipped' => 'Shipped',
+                                    'delivered' => 'Delivered',
+                                    'cancelled' => 'Cancelled',
+                                ])
+                                ->required()
+                                ->default('pending'),
+                            Forms\Components\Toggle::make('is_paid')
+                                ->required()
+                                ->inline(false),
+                        ]),
+
+                    Step::make('Products')
+                        ->icon('heroicon-o-cube')
+                        ->description('Add products to order')
+                        ->schema([
+                            Forms\Components\Repeater::make('orderItems')
+                                ->relationship()
+                                ->schema([
+                                    Forms\Components\Select::make('product_sku_id')
+                                        ->label('Product')
+                                        ->options(function () {
+                                            return ProductSKU::all()->mapWithKeys(function ($sku) {
+                                                $attributes = json_decode($sku->attributes, true);
+                                                $attributeText = '';
+
+                                                if ($attributes) {
+                                                    foreach ($attributes as $attribute) {
+                                                        $attributeText .= $attribute['value'] . ', ';
+                                                    }
+                                                    $attributeText = rtrim($attributeText, ', ');
+                                                }
+
+                                                return [$sku->id => "SKU: {$sku->sku} - {$attributeText}"];
+                                            });
+                                        })
+                                        ->searchable()
+                                        ->required()
+                                        ->reactive()
+                                        ->afterStateUpdated(function ($state, callable $set) {
+                                            $sku = ProductSKU::find($state);
+                                            if ($sku) {
+                                                $set('price', $sku->price);
+                                                $set('quantity', 1);
+                                                $set('subtotal', $sku->price);
+                                            }
+                                        }),
+                                    Forms\Components\TextInput::make('quantity')
+                                        ->numeric()
+                                        ->minValue(1)
+                                        ->default(1)
+                                        ->required()
+                                        ->reactive()
+                                        ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                            $price = $get('price');
+                                            $set('subtotal', $price * $state);
+                                        }),
+                                    Forms\Components\TextInput::make('price')
+                                        ->numeric()
+                                        ->disabled()
+                                        ->dehydrated()
+                                        ->prefix('$')
+                                        ->required(),
+                                    Forms\Components\TextInput::make('subtotal')
+                                        ->numeric()
+                                        ->disabled()
+                                        ->dehydrated()
+                                        ->prefix('$')
+                                        ->required(),
+                                ])
+                                ->columns(4)
+                                ->defaultItems(1)
+                                ->hiddenLabel()
+                                ->mutateRelationshipDataBeforeCreateUsing(function (array $data, $livewire): array {
+                                    // Ensure user_id is set from the parent form
+                                    $data['user_id'] = $livewire->data['user_id'];
+                                    return $data;
+                                }),
+                            Forms\Components\Placeholder::make('total_amount')
+                                ->label('Total Amount')
+                                ->content(function (callable $get) {
+                                    $items = $get('orderItems');
+                                    $total = 0;
+
+                                    if (is_array($items)) {
+                                        foreach ($items as $item) {
+                                            $total += $item['subtotal'] ?? 0;
+                                        }
+                                    }
+
+                                    return '$' . number_format($total, 2);
+                                }),
+                            // Add hidden field to store the calculated amount
+                            Forms\Components\Hidden::make('amount')
+                                ->dehydrated()
+                                ->reactive()
+                                ->afterStateHydrated(function (callable $set, callable $get) {
+                                    $items = $get('orderItems');
+                                    $total = 0;
+
+                                    if (is_array($items)) {
+                                        foreach ($items as $item) {
+                                            $total += $item['subtotal'] ?? 0;
+                                        }
+                                    }
+
+                                    // Add shipping fee if available
+                                    $shippingFee = $get('shipping_fee');
+                                    if ($shippingFee) {
+                                        $total += (float)$shippingFee;
+                                    }
+
+                                    $set('amount', $total);
+                                }),
                         ]),
 
                     Step::make('Delivery')
@@ -96,7 +210,24 @@ class OrderResource extends Resource
                                     Forms\Components\TextInput::make('shipping_fee')
                                         ->numeric()
                                         ->prefix('$')
-                                        ->required(),
+                                        ->required()
+                                        ->reactive()
+                                        ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                            // Recalculate total amount when shipping fee changes
+                                            $items = $get('orderItems');
+                                            $total = 0;
+
+                                            if (is_array($items)) {
+                                                foreach ($items as $item) {
+                                                    $total += $item['subtotal'] ?? 0;
+                                                }
+                                            }
+
+                                            // Add shipping fee
+                                            $total += (float)$state;
+
+                                            $set('amount', $total);
+                                        }),
                                 ]),
                             Forms\Components\TextInput::make('address')
                                 ->maxLength(255)
@@ -132,8 +263,6 @@ class OrderResource extends Resource
                             Forms\Components\TextInput::make('payment_method')
                                 ->required()
                                 ->maxLength(255),
-                            Forms\Components\TextInput::make('transaction_id')
-                                ->maxLength(255),
                             Forms\Components\Toggle::make('is_paid')
                                 ->required()
                                 ->inline(false)
@@ -153,10 +282,10 @@ class OrderResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('id')
-                    ->label('Order ID')
-                    ->sortable()
-                    ->searchable(),
+                Tables\Columns\TextColumn::make('order_number')
+                    ->label('Order #')
+                    ->searchable()
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('user.name')
                     ->label('Customer')
                     ->sortable()
@@ -199,10 +328,10 @@ class OrderResource extends Resource
                     ->modalHeading('Order Details')
                     ->modalWidth(MaxWidth::ThreeExtraLarge)
                     ->slideOver(),
-                Tables\Actions\EditAction::make()
-                    ->modalHeading('Edit Order')
-                    ->modalWidth(MaxWidth::ThreeExtraLarge)
-                    ->slideOver(),
+                // Tables\Actions\EditAction::make()
+                //     ->modalHeading('Edit Order')
+                //     ->modalWidth(MaxWidth::ThreeExtraLarge)
+                //     ->slideOver(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -219,8 +348,8 @@ class OrderResource extends Resource
                     ->schema([
                         Infolists\Components\Grid::make(3)
                             ->schema([
-                                Infolists\Components\TextEntry::make('id')
-                                    ->label('Order ID')
+                                Infolists\Components\TextEntry::make('order_number')
+                                    ->label('Order #')
                                     ->weight(FontWeight::Bold),
                                 Infolists\Components\TextEntry::make('created_at')
                                     ->label('Order Date')
@@ -233,8 +362,11 @@ class OrderResource extends Resource
                                 Infolists\Components\TextEntry::make('amount')
                                     ->money('USD')
                                     ->label('Total Amount'),
-                                Infolists\Components\TextEntry::make('quantity')
-                                    ->label('Items'),
+                                Infolists\Components\TextEntry::make('items_count')
+                                    ->label('Items')
+                                    ->state(function ($record) {
+                                        return $record->orderItems()->count();
+                                    }),
                                 Infolists\Components\Grid::make([
                                     'default' => 1,
                                     'sm' => 1,
