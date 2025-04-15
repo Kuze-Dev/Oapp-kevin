@@ -6,6 +6,8 @@ namespace App\Models;
 use App\Models\Cart;
 use App\Models\Order;
 use App\Models\Payment;
+use App\Models\Replies;
+use App\Models\Comments;
 use App\Models\OrderItem;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -71,5 +73,16 @@ class User extends Authenticatable
     {
         return $this->hasMany(OrderItem::class);
     }
+
+    public function comments():HasMany
+    {
+        return $this->hasMany(Comments::class);
+    }
+
+    public function replies(): HasMany
+{
+    return $this->hasMany(Replies::class);
+}
+
 
 }

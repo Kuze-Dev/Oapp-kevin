@@ -12,7 +12,7 @@ return new class extends Migration {
     {
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
-            $table->integer('quantity');
+            $table->string('order_number');
             $table->decimal('amount', 10, 2);
             $table->boolean('is_paid')->default(false);
             $table->string('shipping_method')->nullable();

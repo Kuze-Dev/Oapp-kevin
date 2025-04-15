@@ -46,8 +46,11 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('brands');
-        Schema::dropIfExists('categories');
-        Schema::dropIfExists('products');
+        Schema::dropIfExists('product_s_k_u_s'); // Drop dependent table first
+        Schema::dropIfExists('products'); // Now 'products' can be safely dropped
+        Schema::dropIfExists('categories'); // Drop 'categories' next
+        Schema::dropIfExists('brands'); // Finally, drop 'brands'
     }
+
+
 };
