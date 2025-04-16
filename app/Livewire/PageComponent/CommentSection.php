@@ -16,6 +16,10 @@ class CommentSection extends Component
     public $commentText = '';
     public $replyText = '';
     public $replyingTo = null;
+    public $editingCommentId = null;
+    public $editingReplyId = null;
+    public $editCommentText = '';
+    public $editReplyText = '';
     public $perPage = 5;
     public $sortDirection = 'desc';
 
@@ -25,6 +29,8 @@ class CommentSection extends Component
     protected $rules = [
         'commentText' => 'required|min:3',
         'replyText' => 'required|min:3',
+        'editCommentText' => 'required|min:3',
+        'editReplyText' => 'required|min:3',
     ];
 
     public function mount($productId)
@@ -79,6 +85,94 @@ class CommentSection extends Component
     {
         $this->replyingTo = null;
         $this->replyText = '';
+    }
+
+    public function startEditComment($commentId)
+    {
+        if (!Auth::check()) {
+            return redirect()->route('login');
+        }
+
+        $comment = Comments::find($commentId);
+
+        if ($comment && ($comment->user_id === Auth::id() || Auth::user()->can('edit comments'))) {
+            $this->editingCommentId = $commentId;
+            $this->editCommentText = $comment->body;
+        }
+    }
+
+    public function cancelEditComment()
+    {
+        $this->editingCommentId = null;
+        $this->editCommentText = '';
+    }
+
+    public function updateComment($commentId)
+    {
+        if (!Auth::check()) {
+            return redirect()->route('login');
+        }
+
+        $this->validate([
+            'editCommentText' => 'required|min:3',
+        ]);
+
+        $comment = Comments::find($commentId);
+
+        if ($comment && ($comment->user_id === Auth::id() || Auth::user()->can('edit comments'))) {
+            $comment->update([
+                'body' => $this->editCommentText,
+            ]);
+
+            $this->editingCommentId = null;
+            $this->editCommentText = '';
+            $this->dispatch('commentAdded')->self();
+            $this->dispatch('notify', ['message' => 'Comment updated successfully!', 'type' => 'success']);
+        }
+    }
+
+    public function startEditReply($replyId)
+    {
+        if (!Auth::check()) {
+            return redirect()->route('login');
+        }
+
+        $reply = Replies::find($replyId);
+
+        if ($reply && ($reply->user_id === Auth::id() || Auth::user()->can('edit replies'))) {
+            $this->editingReplyId = $replyId;
+            $this->editReplyText = $reply->body;
+        }
+    }
+
+    public function cancelEditReply()
+    {
+        $this->editingReplyId = null;
+        $this->editReplyText = '';
+    }
+
+    public function updateReply($replyId)
+    {
+        if (!Auth::check()) {
+            return redirect()->route('login');
+        }
+
+        $this->validate([
+            'editReplyText' => 'required|min:3',
+        ]);
+
+        $reply = Replies::find($replyId);
+
+        if ($reply && ($reply->user_id === Auth::id() || Auth::user()->can('edit replies'))) {
+            $reply->update([
+                'body' => $this->editReplyText,
+            ]);
+
+            $this->editingReplyId = null;
+            $this->editReplyText = '';
+            $this->dispatch('replyUpdated')->self();
+            $this->dispatch('notify', ['message' => 'Reply updated successfully!', 'type' => 'success']);
+        }
     }
 
     public function addReply($commentId)

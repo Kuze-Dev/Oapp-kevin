@@ -1,3 +1,4 @@
+<div>
 <div class="inset-0 overflow-y-auto mt-12 py-12 w-full flex justify-center items-center">
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-6xl m-4 overflow-hidden">
         <div class="flex flex-col lg:flex-row p-8 space-y-6 lg:space-y-0">
@@ -112,5 +113,9 @@
             </div>
         </div>
     </div>
-    <livewire:page-component.comment-section :product-id="$product->id" />
+
+</div>
+<div class="flex justify-center items-center">
+<livewire:page-component.comment-section :product-id="$product->id" />
+</div>
 </div>
