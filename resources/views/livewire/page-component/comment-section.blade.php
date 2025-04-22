@@ -1,3 +1,4 @@
+<!-- Main Comment Section -->
 <div class="comment-section md:w-[60%] w-[85%]">
     <h3 class="text-xl font-semibold mb-4">Comments</h3>
 
@@ -131,6 +132,31 @@
                     </div>
                 @endif
 
+                <div class="ml-13 flex items-center space-x-4">
+                    <!-- Like button shown to ALL users (logged in or not) -->
+                    <button
+                        wire:click="likeComment({{ $comment->id }})"
+                        class="{{ Auth::check() && $comment->liked_by_user ? 'text-blue-500' : 'text-gray-400' }} hover:text-blue-500 focus:outline-none flex items-center"
+                        title="{{ Auth::check() && $comment->liked_by_user ? 'Unlike' : 'Like' }}"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="{{ Auth::check() && $comment->liked_by_user ? 'currentColor' : 'none' }}" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
+                        </svg>
+                        <span class="text-xs">{{ $comment->likes->count() ?? 0 }}</span>
+                    </button>
+
+                    @auth
+                        <button
+                            wire:click="startReply({{ $comment->id }})"
+                            class="text-blue-600 hover:underline text-sm"
+                        >
+                            Reply
+                        </button>
+                    @else
+                        <a href="{{ route('login') }}" class="text-blue-600 hover:underline text-sm">Reply</a>
+                    @endauth
+                </div>
+
                 @auth
                     @if($replyingTo === $comment->id)
                         <div class="ml-13 mb-3">
@@ -163,13 +189,6 @@
                                 </div>
                             </form>
                         </div>
-                    @else
-                        <button
-                            wire:click="startReply({{ $comment->id }})"
-                            class="text-blue-600 hover:underline text-sm ml-13"
-                        >
-                            Reply
-                        </button>
                     @endif
                 @endauth
 
@@ -255,6 +274,20 @@
                                 @else
                                     <div class="ml-10">
                                         {{ $reply->body }}
+                                    </div>
+
+                                    <div class="ml-10 mt-2 flex items-center space-x-3">
+                                        <!-- Like button for replies visible to all users -->
+                                        <button
+                                            wire:click="likeReply({{ $reply->id }})"
+                                            class="{{ Auth::check() && $reply->liked_by_user ? 'text-blue-500' : 'text-gray-400' }} hover:text-blue-500 focus:outline-none flex items-center"
+                                            title="{{ Auth::check() && $reply->liked_by_user ? 'Unlike' : 'Like' }}"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="{{ Auth::check() && $reply->liked_by_user ? 'currentColor' : 'none' }}" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
+                                            </svg>
+                                            <span class="text-xs">{{ $reply->likes_count ?? 0 }}</span>
+                                        </button>
                                     </div>
                                 @endif
                             </div>
