@@ -71,6 +71,7 @@ class ShopSeeder extends Seeder
                 'price' => 999.99, // Added price
                 'stock' => 50, // Added stock
                 'featured' => true,
+                'slug'=> 'iphone-14', // Added slug
             ],
             [
                 'name' => 'Samsung Galaxy S23',
@@ -82,6 +83,7 @@ class ShopSeeder extends Seeder
                 'price' => 899.99,
                 'stock' => 40,
                 'featured' => false,
+                'slug'=> 'samsung-galaxy-s23', // Added slug
             ],
             [
                 'name' => 'Nike Air Max',
@@ -93,6 +95,7 @@ class ShopSeeder extends Seeder
                 'price' => 129.99,
                 'stock' => 100,
                 'featured' => true,
+                'slug'=> 'nike-air-max', // Added slug
             ],
             [
                 'name' => 'Adidas Ultraboost',
@@ -104,6 +107,7 @@ class ShopSeeder extends Seeder
                 'price' => 139.99,
                 'stock' => 80,
                 'featured' => false,
+                'slug'=> 'adidas-ultraboost', // Added slug
             ],
             [
                 'name' => 'Air Fryer',
@@ -115,6 +119,7 @@ class ShopSeeder extends Seeder
                 'price' => 79.99,
                 'stock' => 60,
                 'featured' => true,
+                'slug'=> 'air-fryer', // Added slug
             ],
         ];
 

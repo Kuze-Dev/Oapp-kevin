@@ -57,6 +57,11 @@ class Product extends Model
         return $this->hasMany(Cart::class);
     }
 
+
+    public function getRouteKeyName()
+    {
+        return 'slug';
+    }
 // protected $casts = [
 //     'attributes' => 'array', // Ensure attributes are treated as an array
 // ];

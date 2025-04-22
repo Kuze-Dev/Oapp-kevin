@@ -5,9 +5,11 @@ namespace App\Models;
 use App\Models\User;
 use App\Models\Product;
 use App\Models\Replies;
+use App\Models\CommentLike;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Comments extends Model
 {
@@ -15,7 +17,6 @@ class Comments extends Model
         'user_id',
         'product_id',
         'body',
-        'like'
     ];
 
 
@@ -34,6 +35,18 @@ class Comments extends Model
     {
         return $this->hasMany(Replies::class, 'comment_id'); // Make sure the correct foreign key is used
     }
+
+    // In App\Models\User.php
+
+    public function likes(): HasMany
+{
+    return $this->hasMany(CommentLike::class,'comment_id');
+}
+
+public function likedByUser()
+{
+    return $this->hasOne(CommentLike::class)->where('user_id', auth()->id());
+}
 
 
 

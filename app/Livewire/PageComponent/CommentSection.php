@@ -41,9 +41,11 @@ class CommentSection extends Component
     public function render()
     {
         $comments = Comments::where('product_id', $this->productId)
-            ->with(['user', 'replies.user'])
+            ->with(['user', 'replies.user' , 'likes'])
             ->orderBy('created_at', $this->sortDirection)
             ->paginate($this->perPage);
+
+            // dd($comments);
 
         return view('livewire.page-component.comment-section', [
             'comments' => $comments,
@@ -221,6 +223,63 @@ class CommentSection extends Component
             $this->dispatch('notify', ['message' => 'Reply deleted successfully!', 'type' => 'success']);
         }
     }
+
+    public function likeComment($commentId)
+    {
+        if (!Auth::check()) {
+            return redirect()->route('login');
+        }
+
+        $comment = Comments::find($commentId);
+
+        if (!$comment) {
+            $this->dispatch('notify', ['message' => 'Comment not found.', 'type' => 'error']);
+            return;
+        }
+
+        $userId = Auth::id();
+        $existingLike = $comment->likes()->where('user_id', $userId)->first();
+
+        if ($existingLike) {
+            $existingLike->delete();
+            $message = 'You unliked the comment!';
+        } else {
+            $comment->likes()->create(['user_id' => $userId]);
+            $message = 'You liked the comment!';
+        }
+
+        $this->dispatch('commentUpdated')->self(); // changed to better naming
+        $this->dispatch('notify', ['message' => $message, 'type' => 'success']);
+    }
+
+    public function likeReply($replyId)
+    {
+        if (!Auth::check()) {
+            return redirect()->route('login');
+        }
+
+        $reply = Replies::find($replyId);
+
+        if (!$reply) {
+            $this->dispatch('notify', ['message' => 'Reply not found.', 'type' => 'error']);
+            return;
+        }
+
+        $userId = Auth::id();
+        $existingLike = $reply->likes()->where('user_id', $userId)->first();
+
+        if ($existingLike) {
+            $existingLike->delete();
+            $message = 'You unliked the reply!';
+        } else {
+            $reply->likes()->create(['user_id' => $userId]);
+            $message = 'You liked the reply!';
+        }
+
+        $this->dispatch('replyUpdated')->self(); // changed to better naming
+        $this->dispatch('notify', ['message' => $message, 'type' => 'success']);
+    }
+
 
     public function loadMore()
     {

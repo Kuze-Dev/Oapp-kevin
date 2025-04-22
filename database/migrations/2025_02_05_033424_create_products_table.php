@@ -37,6 +37,7 @@ return new class extends Migration
             $table->integer('stock')->default(0); // Added stock column (default 0)
             $table->enum('status', ['Stock In', 'Sold Out', 'Coming Soon']);
             $table->boolean('featured')->default(false); // Updated status column without default
+            $table->string('slug')->unique();
             $table->timestamps();
         });
     }
