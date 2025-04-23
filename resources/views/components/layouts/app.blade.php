@@ -33,7 +33,7 @@
 
 
 @if(request()->routeIs('product.show'))
-    <livewire:product :id="request()->route('id')"/>
+    <livewire:product :slug="request()->route('slug')"/>
 @endif
 
 @if(request()->routeIs('checkout'))

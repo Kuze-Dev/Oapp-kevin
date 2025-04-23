@@ -18,7 +18,7 @@ Route::get('/', function () {
 // Shop, Cart, and Product pages
 Route::get('/shop', Shop::class)->name('shop');
 Route::get('/cart', Cart::class)->name('cart');
-Route::get('/product/{id}', Product::class)->name('product.show');
+Route::get('/product/{slug}', Product::class)->name('product.show');
 
 // Authentication pages
 Route::get('/login', Login::class)->name('login');

@@ -17,10 +17,13 @@ class Product extends Component
     public $selectedColorImage = null;
     public $price;
 
-    public function mount($id)
+    public function mount($slug)
     {
         // Load product along with its attributes
-        $this->product = ProductModel::with(['productAttributes.productAttributeValues'])->findOrFail($id);
+        $this->product = ProductModel::with(['productAttributes.productAttributeValues'])
+                    ->where('slug', $slug)
+                    ->firstOrFail();
+
         $this->price = $this->product->price;
         $this->selectedColorImage = $this->product->product_image;
 
