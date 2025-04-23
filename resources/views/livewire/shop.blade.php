@@ -89,7 +89,7 @@
                     </p>
                     <p class="text-lg font-semibold text-gray-800">{{ $product->price }} PHP</p>
                     <div class="flex justify-between items-center mt-4">
-                    <a href="/product/{{ $product->id }}" wire:navigate="product({{ $product->id }})">
+                    <a href="/product/{{ $product->slug }}" wire:navigate="product({{ $product->slug}})">
     <button class="px-5 py-3 bg-indigo-600 text-white font-semibold rounded-lg flex items-center space-x-1 hover:bg-indigo-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 shadow-lg transform hover:scale-105">
         <!-- Magnifying Glass Icon for View Details -->
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">

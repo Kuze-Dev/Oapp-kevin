@@ -31,14 +31,14 @@ class Replies extends Model
     {
         return $this->belongsTo(User::class);
     }
-    public function likes():HasMany
+  public function likes(): HasMany
 {
-    return $this->hasMany(ReplyLike::class);
+    return $this->hasMany(ReplyLike::class, 'reply_id');
 }
 
-public function likedByUser():HasOne
+public function likedByUser(): HasOne
 {
-    return $this->hasOne(ReplyLike::class)->where('user_id', auth()->id());
+    return $this->hasOne(ReplyLike::class, 'reply_id')->where('user_id', auth()->id());
 }
 
 

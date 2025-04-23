@@ -23,4 +23,6 @@ class ReplyLike extends Model
     {
         return $this->belongsTo(Replies::class);
     }
+
+
 }
