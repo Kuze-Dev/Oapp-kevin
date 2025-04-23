@@ -115,10 +115,8 @@
     </div>
 
 </div>
-<div class="flex justify-center items-center">
-    @if ($selectedColor && $selectedSize)
-        @livewire('page-component.comment-section', ['productId' => $product->id], key('comment-section-' . $product->id . '-' . $selectedColor . '-' . $selectedSize))
-    @endif
+<div class="flex justify-center items-center" wire:ignore>
+    @livewire('page-component.comment-section', ['productId' => $product->id])
 </div>
 
 

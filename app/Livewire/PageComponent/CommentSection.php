@@ -45,7 +45,6 @@ class CommentSection extends Component
             ->orderBy('created_at', $this->sortDirection)
             ->paginate($this->perPage);
 
-            // dd($comments);
 
         return view('livewire.page-component.comment-section', [
             'comments' => $comments,
