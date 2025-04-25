@@ -33,7 +33,7 @@
 
                         <div class="">
                             <!-- Add to Cart Button -->
-                            <a href="/product/{{ $product->id }}" wire:navigate="product({{ $product->id }})">
+                            <a href="/product/{{ $product->slug }}" wire:navigate="product({{ $product->slug }})">
                             <button
                                     class="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors duration-200 flex items-center space-x-2">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">

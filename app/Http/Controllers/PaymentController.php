@@ -144,7 +144,7 @@ class PaymentController extends Controller
             'line_items' => $lineItems,
             'mode' => 'payment',
             'success_url' => route('payment.success', ['id' => $order->id, 'gateway' => $gateway]),
-            'cancel_url' => route('payment.cancel', ['gateway' => $gateway]),
+            'cancel_url' => route('payment.cancel', ['id' => $order->id, 'gateway' => $gateway]),
             'customer_email' => Session::get('checkout_data.billing.email', Auth::user()->email ?? ''),
             'metadata' => [
                 'customer_name' => Session::get('checkout_data.billing.name', Auth::user()->name ?? ''),
@@ -212,7 +212,7 @@ class PaymentController extends Controller
                     "line_items" => $lineItems,
                     "payment_method_types" => ["card", "gcash", "paymaya", "qrph"],
                     "success_url" => route('payment.success', ['id' => $order->id, 'gateway' => $gateway]),
-                    "cancel_url" => route('payment.cancel', ['gateway' => $gateway]),
+                   "cancel_url" => route('payment.cancel', ['id' => $order->id, 'gateway' => $gateway]),
                     "reference_number" => $referenceNumber,
                     "description" => "Payment for Order #{$order->id}"
                 ]
@@ -370,6 +370,8 @@ class PaymentController extends Controller
     public function paymentCancel(Request $request)
     {
         $gateway = $request->query('gateway');
+        $orderId = $request->query('id');
+
 
         if ($gateway === "paymongo") {
             $sessionId = session('paymongo_sessionId');
@@ -383,6 +385,17 @@ class PaymentController extends Controller
             ])->post("https://api.paymongo.com/v1/checkout_sessions/{$sessionId}/expire");
 
             if ($response->successful()) {
+                if ($orderId) {
+                    $order = Order::find($orderId);
+
+                    // Update order status if found
+                    if ($order) {
+                        $order->update([
+                            'status' => 'cancelled',
+                            'is_paid' => false
+                        ]);
+                    }
+                }
                 session()->forget('paymongo_sessionId');
             }
 
@@ -391,6 +404,17 @@ class PaymentController extends Controller
             $stripe = new StripeClient(env('STRIPE_SECRET_KEY'));
 
             $stripe->checkout->sessions->expire($sessionId);
+            if ($orderId) {
+                $order = Order::find($orderId);
+
+                // Update order status if found
+                if ($order) {
+                    $order->update([
+                        'status' => 'cancelled',
+                        'is_paid' => false
+                    ]);
+                }
+            }
             session()->forget('stripe_checkout_id');
         }
 
